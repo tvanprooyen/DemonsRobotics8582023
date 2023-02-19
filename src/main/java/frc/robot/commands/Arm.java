@@ -2,7 +2,6 @@ package frc.robot.commands;
 
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.subsystems.ArmControl;
-import edu.wpi.first.math.controller.PIDController;
 
 //arm stuff
 public class Arm extends CommandBase{

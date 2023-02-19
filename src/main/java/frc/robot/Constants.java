@@ -81,6 +81,8 @@ public final class Constants {
         public static final int kFrontRightDriveAbsoluteEncoderPort = 9;
         public static final int kBackRightDriveAbsoluteEncoderPort = 12;
 
+        public static final int kGyroPort = 0; //TODO change when installed!
+
         public static final boolean kFrontLeftDriveAbsoluteEncoderReversed = true;
         public static final boolean kBackLeftDriveAbsoluteEncoderReversed = true;
         public static final boolean kFrontRightDriveAbsoluteEncoderReversed = true;

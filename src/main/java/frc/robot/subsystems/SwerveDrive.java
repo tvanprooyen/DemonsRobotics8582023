@@ -59,35 +59,39 @@ public class SwerveDrive extends SubsystemBase {
         DriveConstants.kBackRightDriveAbsoluteEncoderReversed);
 
     //gyroscope
-    private final PigeonIMU mpigeon = new PigeonIMU(0);
+    private final PigeonIMU mpigeon = new PigeonIMU(DriveConstants.kGyroPort);
 
-    
-    private final SwerveModulePosition frontLeftPosistion = new SwerveModulePosition(frontLeft.getState().speedMetersPerSecond, frontLeft.getState().angle);
-    private final SwerveModulePosition backLeftPosistion = new SwerveModulePosition(backLeft.getState().speedMetersPerSecond, backLeft.getState().angle);
-    private final SwerveModulePosition frontRightPosistion = new SwerveModulePosition(frontRight.getState().speedMetersPerSecond, frontRight.getState().angle);
-    private final SwerveModulePosition backRightPosistion = new SwerveModulePosition(backRight.getState().speedMetersPerSecond, backRight.getState().angle);
-
-    private final SwerveModulePosition[] SMP = {frontLeftPosistion, backLeftPosistion, frontRightPosistion, backRightPosistion};
-
-
-    private final SwerveDriveOdometry odometer = new SwerveDriveOdometry(DriveConstants.kDriveKinematics,
-    new Rotation2d(0), SMP);
+    //Setup Odometry
+    private final SwerveDriveOdometry odometer = new SwerveDriveOdometry(
+        DriveConstants.kDriveKinematics, getRotation2d(),
+        new SwerveModulePosition[] {
+            frontLeft.getPosision(),
+            frontRight.getPosision(),
+            backLeft.getPosision(),
+            backRight.getPosision()
+        }
+    );
     
     public SwerveDrive(){
-        new Thread(() -> {
+
+        zeroHeading();
+
+        //No Need
+        /* new Thread(() -> {
             try {
                 Thread.sleep(1000);
                 zeroHeading();
             } catch (Exception e) {
             }
-        }).start();
+        }).start(); */
     }
+
     public void zeroHeading(){
         mpigeon.setYaw(0);
     }
 
     public double getHeading(){
-        return Math.IEEEremainder(mpigeon.getAbsoluteCompassHeading(), 360);
+        return Math.IEEEremainder(mpigeon.getFusedHeading(), 360);
     }
 
     public Rotation2d getRotation2d(){
@@ -99,7 +103,15 @@ public class SwerveDrive extends SubsystemBase {
     } 
 
      public void resetOdometry(Pose2d pose) {
-        odometer.resetPosition(getRotation2d(), SMP, pose);
+        odometer.resetPosition(
+            getRotation2d(), 
+            new SwerveModulePosition[] {
+                frontLeft.getPosision(),
+                frontRight.getPosision(),
+                backLeft.getPosision(),
+                backRight.getPosision()
+            }, 
+            pose);
     } 
 
 
@@ -107,7 +119,15 @@ public class SwerveDrive extends SubsystemBase {
     public void periodic() {
        
 
-        odometer.update(getRotation2d(), SMP);
+        odometer.update(
+            getRotation2d(), 
+            new SwerveModulePosition[] {
+                frontLeft.getPosision(),
+                frontRight.getPosision(),
+                backLeft.getPosision(),
+                backRight.getPosision()
+            }
+        );
 
         SmartDashboard.putNumber("Robot Heading", getHeading());
         SmartDashboard.putString("Robot Location", getPose().getTranslation().toString());
@@ -128,8 +148,8 @@ public class SwerveDrive extends SubsystemBase {
     public void setModuleStates(SwerveModuleState[] desiredStates){
         SwerveDriveKinematics.desaturateWheelSpeeds(desiredStates, DriveConstants.kPhysicalMaxSpeedMetersPerSecond);
         frontLeft.setDesiredState(desiredStates[0]);
-        backLeft.setDesiredState(desiredStates[1]);
-        frontRight.setDesiredState(desiredStates[2]);
+        frontRight.setDesiredState(desiredStates[1]);
+        backLeft.setDesiredState(desiredStates[2]);
         backRight.setDesiredState(desiredStates[3]);
     }
 }

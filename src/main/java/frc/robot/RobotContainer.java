@@ -4,7 +4,6 @@
 
 package frc.robot;
 
-import java.time.InstantSource;
 import java.util.List;
 
 import edu.wpi.first.math.controller.PIDController;
@@ -17,8 +16,8 @@ import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.math.trajectory.TrajectoryGenerator;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.PIDCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
@@ -61,7 +60,7 @@ public class RobotContainer {
 
   private void configureButtonBindings() {
     //Swerve
-    new JoystickButton(driverJoystick,2).whenPressed(() -> swerveDrive.zeroHeading());
+    new JoystickButton(driverJoystick,2).onTrue(Commands.runOnce(() -> swerveDrive.zeroHeading()));
 
     //Arm
     new JoystickButton(driverJoystick,4).whileTrue(new Arm(armControl, 3, 1, 0, 0));
