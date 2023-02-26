@@ -7,96 +7,84 @@ import frc.robot.subsystems.ArmControl;
 public class Arm extends CommandBase{
 
     private ArmControl armControl;
-    private double desiredPositionR, rotSpeed, desiredPositionE, extSpeed;
-    
+    private double ArmRotationSet, ExtentionSet, ExtentionSpeed;
+    private boolean AutoRotate;
 
-public Arm (ArmControl armRotationControl, double desiredPositionR, double rotSpeed, double desiredPostionE, double extSpeed){
-    this.armControl = armRotationControl;
-    this.desiredPositionR = desiredPositionR;
-    this.rotSpeed = rotSpeed;
-    this.desiredPositionE = desiredPostionE;
-    this.extSpeed = extSpeed;
-    addRequirements(armRotationControl);
-}    
+    private boolean disableRotation;
 
-@Override
-public void initialize(){
+    /**
+   * Sets the Arm Control Profile
+   * 
+   * @param armRotationControl is the arm control subsystem
+   * @param AutoRotate allows the arm to rotate twords the goal
+   * @param ArmRotationSet is the setpoint in deg (0-360) for the arm to go
+   * @param ExtentionSet is the setpoint in inches for the extention to reach for. -1 stay at last setpoint.
+   */
+    public Arm (ArmControl armRotationControl, boolean AutoRotate, double ArmRotationSet, double ExtentionSet){
+        this.armControl = armRotationControl;
+        this.ArmRotationSet = ArmRotationSet;
+        this.ExtentionSet = ExtentionSet;
+        this.AutoRotate = AutoRotate;
+        this.ExtentionSpeed = -2;
+        disableRotation = false;
+        addRequirements(armRotationControl);
+    }
 
-}
+    public Arm (ArmControl armRotationControl, double ExtentionSpeed){
+        this.armControl = armRotationControl;
+        this.ArmRotationSet = armRotationControl.getArmRotation();
+        this.ExtentionSet = -1;
+        this.AutoRotate = false;
+        this.ExtentionSpeed = ExtentionSpeed;
+        disableRotation = true;
+        addRequirements(armRotationControl);
+    }
 
-@Override
-public void execute(){
-    if( desiredPositionR != 0){
-        armControl.setdesiredPositionR(desiredPositionR);
-    } else {
-        armControl.setRotSpeed(rotSpeed);
+    @Override
+    public void initialize(){
+        if(armControl.getArmExtentionSpeed() != 0) {
+            armControl.setArmExtentionSpeed(0);
+            armControl.setArmExtentionSpeed(-2);
+        }
+
+        if(ExtentionSet == -1) {
+            armControl.setArmExtention(armControl.getExtentionPosition());
+        }
+    }
+
+    @Override
+    public void execute(){
+
+        if(ExtentionSet != -1) {
+            armControl.setArmExtention(this.ExtentionSet);
+        } else {
+            armControl.setArmExtentionSpeed(this.ExtentionSpeed);
+        }
+
+        if(!disableRotation) {
+            armControl.setArmRotation(this.ArmRotationSet);
+        }
+        
+    }
+
+    @Override
+    public void end(boolean interrupted) {
+
+        armControl.setArmRotation(armControl.getArmRotation());
+        armControl.setArmExtention(armControl.getExtentionPosition());
+        armControl.setArmExtentionSpeed(0);
+        armControl.setArmExtentionSpeed(-2);
+
+        /* if(armControl.getExtentionPosition() < 3) {
+            armControl.setArmRotation(30);
+        } else {
+            armControl.setArmRotation(armControl.getRotationPosition());
+            armControl.setArmExtention(armControl.getExtentionPosition());
+        } */
+    }
+
+    @Override
+    public boolean isFinished(){
+        return false;
     }
 }
-
-@Override
-public void end(boolean interrupted) {
-    armControl.setRotSpeed(0);
-}
-
-@Override
-public boolean isFinished(){
-    return false;
-}
-}
-
-/* 
-package frc.robot.commands;
-
-import edu.wpi.first.wpilibj2.command.CommandBase;
-import frc.robot.subsystems.ArmControl;
-import edu.wpi.first.math.controller.PIDController;
-
-//arm stuff
-public class Arm extends CommandBase{
-
-    private ArmControl armControl;
-    private double desiredPositionR, rotSpeed;
-    
-
-public Arm (ArmControl armControl){
-    this.armControl = armControl;
-    addRequirements(armControl);
-}    
-
-@Override
-public void initialize(){
-
-}
-
-public void setRotSpeed(double rotSpeed) {
-    this.rotSpeed = rotSpeed;
-}
-
-public void setdesiredPositionR(double desiredPositionR) {
-    this.desiredPositionR = desiredPositionR;
-}
-
-public void GoToPos() {
-    if( desiredPositionR != 0){
-        armControl.setdesiredPositionR(desiredPositionR);
-    } else {
-        armControl.setRotSpeed(rotSpeed);
-    }
-}
-
-@Override
-public void execute(){
-    GoToPos();
-}
-
-@Override
-public void end(boolean interrupted) {
-    armControl.setRotSpeed(0);
-}
-
-@Override
-public boolean isFinished(){
-    return false;
-}
-}
- */

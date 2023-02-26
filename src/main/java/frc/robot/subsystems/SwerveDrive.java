@@ -29,7 +29,8 @@ public class SwerveDrive extends SubsystemBase {
         DriveConstants.kFrontLeftTurningEncoderReversed,
         DriveConstants.kFrontLeftDriveAbsoluteEncoderPort,
         DriveConstants.kFrontLeftDriveAbsoluteEncoderOffsetRad,
-        DriveConstants.kFrontLeftDriveAbsoluteEncoderReversed);
+        DriveConstants.kFrontLeftDriveAbsoluteEncoderReversed,
+        DriveConstants.kFrontLefTurnMotorReversed);
 
     private final SwerveModule frontRight = new SwerveModule(
         DriveConstants.kFrontRightDriveMotorPort,
@@ -38,8 +39,10 @@ public class SwerveDrive extends SubsystemBase {
         DriveConstants.kFrontRightTurningEncoderReversed,
         DriveConstants.kFrontRightDriveAbsoluteEncoderPort,
         DriveConstants.kFrontRightDriveAbsoluteEncoderOffsetRad,
-        DriveConstants.kFrontRightDriveAbsoluteEncoderReversed);
+        DriveConstants.kFrontRightDriveAbsoluteEncoderReversed,
+        DriveConstants.kFrontRightTurnMotorReversed);
 
+        
     private final SwerveModule backLeft = new SwerveModule(
         DriveConstants.kBackLeftDriveMotorPort,
         DriveConstants.kBackLeftTurningMotorPort,
@@ -47,7 +50,9 @@ public class SwerveDrive extends SubsystemBase {
         DriveConstants.kBackLeftTurningEncoderReversed,
         DriveConstants.kBackLeftDriveAbsoluteEncoderPort,
         DriveConstants.kBackLeftDriveAbsoluteEncoderOffsetRad,
-        DriveConstants.kBackLeftDriveAbsoluteEncoderReversed);
+        DriveConstants.kBackLeftDriveAbsoluteEncoderReversed,
+        DriveConstants.kBackLeftTurnMotorReversed);
+     
 
     private final SwerveModule backRight = new SwerveModule(
         DriveConstants.kBackRightDriveMotorPort,
@@ -56,7 +61,8 @@ public class SwerveDrive extends SubsystemBase {
         DriveConstants.kBackRightTurningEncoderReversed,
         DriveConstants.kBackRightDriveAbsoluteEncoderPort,
         DriveConstants.kBackRightDriveAbsoluteEncoderOffsetRad,
-        DriveConstants.kBackRightDriveAbsoluteEncoderReversed);
+        DriveConstants.kBackRightDriveAbsoluteEncoderReversed,
+        DriveConstants.kBackRightTurnMotorReversed);
 
     //gyroscope
     private final PigeonIMU mpigeon = new PigeonIMU(DriveConstants.kGyroPort);
@@ -87,11 +93,11 @@ public class SwerveDrive extends SubsystemBase {
     }
 
     public void zeroHeading(){
-        mpigeon.setYaw(0);
+        mpigeon.setFusedHeading(0.0);
     }
 
     public double getHeading(){
-        return Math.IEEEremainder(mpigeon.getFusedHeading(), 360);
+        return 0;/* Math.IEEEremainder(mpigeon.getFusedHeading(), 360); */
     }
 
     public Rotation2d getRotation2d(){
@@ -132,10 +138,15 @@ public class SwerveDrive extends SubsystemBase {
         SmartDashboard.putNumber("Robot Heading", getHeading());
         SmartDashboard.putString("Robot Location", getPose().getTranslation().toString());
 
-        SmartDashboard.putNumber("BL angle", backLeft.getTurningPosition()*2*Math.PI);
-        SmartDashboard.putNumber("BR angle", backRight.getTurningPosition()*2*Math.PI);
-        SmartDashboard.putNumber("FL angle", frontLeft.getTurningPosition()*2*Math.PI);
-        SmartDashboard.putNumber("FR angle", frontRight.getTurningPosition()*2*Math.PI);
+        SmartDashboard.putNumber("BL angle", backLeft.getTurningPosition());
+        SmartDashboard.putNumber("BR angle", backRight.getTurningPosition());
+        SmartDashboard.putNumber("FL angle", frontLeft.getTurningPosition());
+        SmartDashboard.putNumber("FR angle", frontRight.getTurningPosition());
+
+        SmartDashboard.putNumber("BL angle CanCoder", Math.toDegrees(backLeft.getAEPosActual()));
+        SmartDashboard.putNumber("BR angle CanCoder", Math.toDegrees(backRight.getAEPosActual()));
+        SmartDashboard.putNumber("FL angle CanCoder", Math.toDegrees(frontLeft.getAEPosActual()));
+        SmartDashboard.putNumber("FR angle CanCoder", Math.toDegrees(frontRight.getAEPosActual()));
     }
 
     public void stopModules(){
