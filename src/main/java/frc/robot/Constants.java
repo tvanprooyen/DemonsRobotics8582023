@@ -131,6 +131,40 @@ public final class Constants {
     public static final class ArmConstants {
         public static final double kPArmRotation = 0.25;
         public static final double kPArmExtension = 0.25;
+
+        public enum ArmMotionProfiles {
+            NONE(0,0,false,false),
+            LINK1(45,0.5,false,false),
+            LINK2(90,11.5,false,false),
+            LINK3(100,39.5,false,false);
+    
+    
+            private double rotation,extention;
+            private boolean interrupt,autorotate;
+    
+            ArmMotionProfiles(double rotation, double extention, boolean interrupt, boolean autorotate) {
+                this.rotation = rotation;
+                this.extention = extention;
+                this.interrupt = interrupt;
+                this.autorotate = autorotate;
+            }
+    
+            public double getRotation() {
+                return this.rotation;
+            }
+    
+            public double getExtention() {
+                return this.extention;
+            }
+    
+            public boolean getInterrupt() {
+                return this.interrupt;
+            }
+    
+            public boolean geAutoRotate() {
+                return this.autorotate;
+            }
+        }
     }
 
     public static final class AutoConstants {

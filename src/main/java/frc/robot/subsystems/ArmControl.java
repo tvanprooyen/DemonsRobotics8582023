@@ -11,7 +11,6 @@ import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.Constants.ArmConstants;
 
 public class ArmControl extends SubsystemBase {
     
@@ -27,7 +26,9 @@ public class ArmControl extends SubsystemBase {
 
     private double ArmRotationSet, ExtentionSet;
 
-    private double ArmRotationSetBuffer;
+    private double ArmRotationSetBuffer, ArmExtentionSetBuffer;
+
+    private double ArmRotationError, ArmExtentionError;
 
     private double ExtentionSpeed;
 
@@ -55,6 +56,11 @@ public class ArmControl extends SubsystemBase {
 
         this.ArmRotationSetBuffer = -1;
 
+        this.ArmExtentionSetBuffer = -1;
+
+        this.ArmRotationError = 0;
+        this.ArmExtentionError = 0;
+
         extMotor.setIdleMode(IdleMode.kBrake);
 
         //resetExtentionCount();
@@ -69,13 +75,7 @@ public class ArmControl extends SubsystemBase {
     }
 
     public void setArmRotation (double ArmRotationSet){
-        if(!(getExtentionPosition() > 1 || getArmExtention() > 1)) {
-            this.ArmRotationSet = ArmRotationSet;
-            this.ArmRotationSetBuffer = -1;
-        } else {
-            this.ArmRotationSetBuffer = this.ArmRotationSet;
-        }
-        
+        this.ArmRotationSet = ArmRotationSet;
     }
 
     public double getArmRotation() {
@@ -90,17 +90,29 @@ public class ArmControl extends SubsystemBase {
         return this.ArmRotationSetBuffer;
     }
 
+    public void setArmRotationError(double ArmRotationError) {
+        this.ArmRotationError = ArmRotationError;
+    }
+
+    public double getArmRotationError() {
+        return this.ArmRotationError;
+    }
+
+    public boolean isArmRotationRunning() {
+        //Acceptable Range to say its finished, There will always be an error in PID. Never fully reaches 0;
+        double rotationTol = 0.01; //TODO CHANGE THIS WHEN TESTING
+
+        return (getArmRotationError() > -rotationTol) && (getArmRotationError() < rotationTol);
+    }
+
     public void runArmRotation() {
         double ArmRotationFuturePosition = 0;
 
         if(!this.stopControl) {
 
-            if(this.ArmRotationSetBuffer !=-1 && (getArmExtention() < 1)) {
-                this.ArmRotationSet = this.ArmRotationSetBuffer;
-                this.ArmRotationSetBuffer = -1;
-            }
+            ArmRotationFuturePosition = rotPID.calculate(getRotationPosition(), getArmRotation());
 
-                ArmRotationFuturePosition = rotPID.calculate(getRotationPosition(), ArmRotationSet);
+            setArmRotationError(ArmRotationFuturePosition);
 
             if(ArmRotationFuturePosition > 0.40) {
                 ArmRotationFuturePosition = 0.40;
@@ -140,9 +152,6 @@ public class ArmControl extends SubsystemBase {
         }
 
         rotMotor.set(ArmRotationFuturePosition);
-
-        
-        SmartDashboard.putNumber("Arm Speed", ArmRotationFuturePosition * PD.getVoltage());
     }
 
     //----------------------------Arm Extention----------------------------//
@@ -160,16 +169,41 @@ public class ArmControl extends SubsystemBase {
      * @param ExtentionSet set the posistion in inches
      */
     public void setArmExtention (double ExtentionSet){
-        if(ExtentionSet == -1) {
-            this.ExtentionSet = getExtentionPosition();
-        } else {
-            this.ExtentionSet = ExtentionSet;
-        }
+        this.ExtentionSet = ExtentionSet;
     }
 
     public double getArmExtention() {
         return this.ExtentionSet;
     }
+
+    public void setArmExtentionBuffer(double ArmExtentionSetBuffer) {
+        this.ArmExtentionSetBuffer = ArmExtentionSetBuffer;
+    }
+
+    public double getArmExtentionBuffer() {
+        return this.ArmExtentionSetBuffer;
+    }
+
+    public void setArmExtentionError(double ArmExtentionError) {
+        this.ArmExtentionError = ArmExtentionError;
+    }
+
+    public double getArmExtentionError() {
+        return this.ArmExtentionError;
+    }
+
+    public boolean isArmExtented() {
+        //Get Possible Position or Actual Position
+        return getArmExtention() > 1 || getExtentionPosition() > 1;
+    }
+
+    public boolean isArmExtentionRunning() {
+        //Acceptable Range to say its finished, There will always be an error in PID. Never fully reaches 0;
+        double extentionTol = 0.01; //TODO CHANGE THIS WHEN TESTING
+
+        return (getArmExtentionError() > -extentionTol) && (getArmExtentionError() < extentionTol);
+    }
+
 
     public void setArmExtentionSpeed(double ExtentionSpeed) {
         this.ExtentionSpeed = ExtentionSpeed;
@@ -185,9 +219,7 @@ public class ArmControl extends SubsystemBase {
     public void resetEncoder() {
         setArmExtention(0);
         extMotor.getEncoder().setPosition(0);
-        //extMotor.setIdleMode(IdleMode.kBrake);
         this.isExtentionEncoderReset = true;
-        //this.stopControl = false;
     }
 
     public void runArmExtention() {
@@ -195,13 +227,11 @@ public class ArmControl extends SubsystemBase {
         double speedLimiter = 0.6;
 
         if(!this.stopControl) {
-            if(isExtentionEncoderReset == true && this.ExtentionSpeed == -2){
+            if(isExtentionEncoderReset == true && getArmExtentionSpeed() == -2){
+                
+                ArmExtentionFuturePosition = extPID.calculate(getExtentionPosition(), getArmExtention());
 
-                if((/* getArmRotation() !=  */this.ArmRotationSetBuffer == -1)) {
-                    ArmExtentionFuturePosition = extPID.calculate(getExtentionPosition(), 0.5);
-                } else {
-                    ArmExtentionFuturePosition = extPID.calculate(getExtentionPosition(), this.ExtentionSet);
-                }
+                setArmExtentionError(ArmExtentionFuturePosition);
 
                 if(ArmExtentionFuturePosition > speedLimiter) {
                     ArmExtentionFuturePosition = speedLimiter;
@@ -210,7 +240,7 @@ public class ArmControl extends SubsystemBase {
                 }
 
             } else {
-                if(this.ExtentionSpeed != -2) {
+                if(getArmExtentionSpeed() != -2) {
                     setArmExtention(getExtentionPosition());
                     ArmExtentionFuturePosition = this.ExtentionSpeed;
                 }
@@ -227,13 +257,59 @@ public class ArmControl extends SubsystemBase {
                 ArmExtentionFuturePosition = 0;
             } */
             
-            SmartDashboard.putNumber("Arm Extention Speed", ArmExtentionFuturePosition * PD.getVoltage());
         }
 
         extMotor.set(ArmExtentionFuturePosition);
     }
 
     //----------------------------Other----------------------------//
+
+    public void setArmMotionProfile(double ArmRotationSet, double ExtentionSet, boolean interrupt) {
+
+        if((isArmRotationRunning() || isArmExtented()) && !interrupt) {
+            if(getArmRotationBuffer() == -1) {
+                setArmRotationBuffer(ArmRotationSet);
+            }
+            
+            if(isArmExtented()) {
+                setArmExtentionBuffer(ExtentionSet);
+                setArmExtention(0.5);
+                return;
+            }
+        } else {
+            if(!isArmExtentionRunning()) {
+                if(getArmRotationBuffer() != -1) {
+                    setArmExtention(ExtentionSet);
+                    setArmRotationBuffer(-1);
+                } else {
+                    if(getArmRotation() != ArmRotationSet) {
+                        setArmRotation(ArmRotationSet);
+                    }
+                } 
+            }
+        }
+
+        if(isArmExtentionRunning() && !interrupt) {
+            setArmExtentionBuffer(ExtentionSet);
+        } else {
+            if(!isArmRotationRunning()) {
+                if(getArmExtentionBuffer() != -1) {
+                    setArmExtention(ExtentionSet);
+                    setArmExtentionBuffer(-1);
+                } else {
+                    if(getArmExtention() != ExtentionSet) {
+                        setArmExtention(ExtentionSet);
+                    }
+                }
+            }
+            
+        }
+        
+    }
+
+    public boolean isMotionProfilerunning() {
+        return isArmExtentionRunning() || isArmRotationRunning();
+    }
 
     public void stop() {
         this.stopControl = true;
@@ -260,7 +336,18 @@ public class ArmControl extends SubsystemBase {
 
         SmartDashboard.putNumber("Arm Rotation Set", getArmRotation());
 
-        SmartDashboard.putNumber("Arm Rotation Set Buffer", this.ArmRotationSetBuffer);
+        SmartDashboard.putNumber("Arm Rotation Set Buffer", getArmRotationBuffer());
+
+        SmartDashboard.putNumber("Arm Extention Set Buffer", getArmExtentionBuffer());
+
+        SmartDashboard.putNumber("Arm Rotation Error", getArmRotationError());
+
+        SmartDashboard.putNumber("Arm Extention Error", getArmExtentionError());
+
+        SmartDashboard.putNumber("Arm Extention Voltage", getArmRotationError() * PD.getVoltage());
+
+        SmartDashboard.putNumber("Arm Rotation Voltage", getArmExtentionError() * PD.getVoltage());
+        
     }
 }
 
