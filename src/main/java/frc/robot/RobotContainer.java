@@ -60,17 +60,17 @@ public class RobotContainer {
     new JoystickButton(driverJoystick,2).whileTrue(Commands.runOnce(() -> swerveDrive.zeroHeading()));
     
     //Arm
-    new JoystickButton(driverJoystick,3).whileTrue(new Arm(armControl, false, 90, -1));
-    new JoystickButton(driverJoystick,4).whileTrue(new Arm(armControl, false, 270, -1));
+    new JoystickButton(driverJoystick,3).onTrue(new Arm(armControl, false, 90, 0.5));
+    new JoystickButton(driverJoystick,4).onTrue(new Arm(armControl, false, 270, 0.5));
 
-    new JoystickButton(driverJoystick,7).whileTrue(new Arm(armControl, false, 40, -1));
+    new JoystickButton(driverJoystick,7).onTrue(new Arm(armControl, false, 40, 0.5));
 
     //Further Pole 39.5 | Closer Pole 11.5
-    new JoystickButton(driverJoystick,5).whileTrue(new Arm(armControl, false, 90, 11.5));
-    new JoystickButton(driverJoystick,6).whileTrue(new Arm(armControl, false, 90,  5 /* 39.5 */));
+    new JoystickButton(driverJoystick,5).onTrue( new Arm(armControl, false, 110, 20 /* 11.5 */));
+    new JoystickButton(driverJoystick,6).onTrue(new Arm(armControl, false, 115, 39 /* 39.5 */));
 
-    new JoystickButton(driverJoystick,1).whileTrue(new Arm(armControl, -0.3));
-    new JoystickButton(driverJoystick,2).whileTrue(new Arm(armControl, 0.3));
+    new JoystickButton(driverJoystick,1).onTrue(new Arm(armControl, -0.3));
+    new JoystickButton(driverJoystick,2).onTrue(new Arm(armControl, 0.3));
     
     new JoystickButton(driverJoystick,8).whileTrue(Commands.runOnce(() -> armControl.resetEncoder()));
     //new JoystickButton(driverJoystick,3).whileTrue(new Arm(armControl, 0, 0.02, 0, 0));

@@ -12,6 +12,8 @@ public class Arm extends CommandBase{
 
     private boolean disableRotation;
 
+    private boolean isFinished;
+
     /**
    * Sets the Arm Control Profile
    * 
@@ -27,6 +29,7 @@ public class Arm extends CommandBase{
         this.AutoRotate = AutoRotate;
         this.ExtentionSpeed = -2;
         disableRotation = false;
+        this.isFinished = false;
         addRequirements(armRotationControl);
     }
 
@@ -37,6 +40,7 @@ public class Arm extends CommandBase{
         this.AutoRotate = false;
         this.ExtentionSpeed = ExtentionSpeed;
         disableRotation = true;
+        this.isFinished = false;
         addRequirements(armRotationControl);
     }
 
@@ -55,25 +59,22 @@ public class Arm extends CommandBase{
     @Override
     public void execute(){
 
-        if(ExtentionSet != -1) {
-            armControl.setArmExtention(this.ExtentionSet);
+        if(ExtentionSpeed == -2) {
+            this.isFinished = armControl.setArmMotionProfile(ArmRotationSet, ExtentionSet, false);
         } else {
             armControl.setArmExtentionSpeed(this.ExtentionSpeed);
         }
-
-        if(!disableRotation) {
-            armControl.setArmRotation(this.ArmRotationSet);
-        }
-        
     }
 
     @Override
     public void end(boolean interrupted) {
 
-        armControl.setArmRotation(armControl.getArmRotation());
-        armControl.setArmExtention(armControl.getExtentionPosition());
+        /* armControl.setArmRotation(armControl.getArmRotation());
+        armControl.setArmExtention(armControl.getExtentionPosition()); */
         armControl.setArmExtentionSpeed(0);
         armControl.setArmExtentionSpeed(-2);
+
+        this.isFinished = true;
 
         /* if(armControl.getExtentionPosition() < 3) {
             armControl.setArmRotation(30);
@@ -85,6 +86,6 @@ public class Arm extends CommandBase{
 
     @Override
     public boolean isFinished(){
-        return false;
+        return this.isFinished;
     }
 }
