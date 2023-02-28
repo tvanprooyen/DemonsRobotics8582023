@@ -4,7 +4,8 @@
 
 package frc.robot.subsystems;
 
-import com.ctre.phoenix.sensors.PigeonIMU;
+import com.ctre.phoenix.sensors.Pigeon2;
+import com.ctre.phoenix.sensors.Pigeon2Configuration;
 
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -41,7 +42,7 @@ public class SwerveDrive extends SubsystemBase {
     DriveConstants.kBackRightDriveAbsoluteEncoderPort,
     DriveConstants.kBackRightDriveAbsoluteEncoderOffsetRad);
 
-  private final PigeonIMU m_gyro = new PigeonIMU(0);
+  private final Pigeon2 m_gyro = new Pigeon2(0);
 
   private final SwerveDriveKinematics m_kinematics = DriveConstants.kDriveKinematics;
 
@@ -61,11 +62,17 @@ public class SwerveDrive extends SubsystemBase {
   }
 
   public void zeroHeading() {
-    m_gyro.setFusedHeading(0);
+    /* m_gyro.setAccumZAngle(0) */
+
+    Pigeon2Configuration config = new Pigeon2Configuration();
+
+    config.MountPoseYaw = 0;
+
+    m_gyro.configAllSettings(config);
   }
 
   public double getHeading() {
-    return m_gyro.getFusedHeading();
+    return m_gyro.getYaw();
   }
 
   public Rotation2d getRotation2d(){

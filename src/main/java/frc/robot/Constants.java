@@ -20,6 +20,33 @@ import edu.wpi.first.math.util.Units;
  */
 public final class Constants {
 
+    public static final class SDSConstants {
+        public static final double DRIVETRAIN_TRACKWIDTH_METERS = 0.2794;
+    public static final double DRIVETRAIN_WHEELBASE_METERS = 0.2794;
+
+    public static final int DRIVETRAIN_PIGEON_ID = 16;
+
+    public static final int FRONT_LEFT_MODULE_DRIVE_MOTOR = 6;
+    public static final int FRONT_LEFT_MODULE_STEER_MOTOR = 5;
+    public static final int FRONT_LEFT_MODULE_STEER_ENCODER = 10;
+    public static final double FRONT_LEFT_MODULE_STEER_OFFSET = -Math.toRadians(218.671);
+
+    public static final int FRONT_RIGHT_MODULE_DRIVE_MOTOR = 8;
+    public static final int FRONT_RIGHT_MODULE_STEER_MOTOR = 7;
+    public static final int FRONT_RIGHT_MODULE_STEER_ENCODER = 9;
+    public static final double FRONT_RIGHT_MODULE_STEER_OFFSET = -Math.toRadians(156.269);
+
+    public static final int BACK_LEFT_MODULE_DRIVE_MOTOR = 3;
+    public static final int BACK_LEFT_MODULE_STEER_MOTOR = 4;
+    public static final int BACK_LEFT_MODULE_STEER_ENCODER = 11;
+    public static final double BACK_LEFT_MODULE_STEER_OFFSET = -Math.toRadians(91.142);
+
+    public static final int BACK_RIGHT_MODULE_DRIVE_MOTOR = 1;
+    public static final int BACK_RIGHT_MODULE_STEER_MOTOR = 2;
+    public static final int BACK_RIGHT_MODULE_STEER_ENCODER = 12;
+    public static final double BACK_RIGHT_MODULE_STEER_OFFSET = -Math.toRadians(337.236);
+    }
+
     //modules
     public static final class ModuleConstants {
         public static final double kWheelDiameterMeters = Units.inchesToMeters(4);

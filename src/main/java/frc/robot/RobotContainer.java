@@ -15,6 +15,7 @@ import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.math.trajectory.TrajectoryGenerator;
 import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
@@ -25,8 +26,10 @@ import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.OIConstants;
 import frc.robot.commands.Arm;
+import frc.robot.commands.DriveCommand;
 import frc.robot.commands.SwerveJoystick;
 import frc.robot.subsystems.ArmControl;
+import frc.robot.subsystems.DrivetrainSubsystem;
 import frc.robot.subsystems.SwerveDrive;
 
 
@@ -37,19 +40,21 @@ import frc.robot.subsystems.SwerveDrive;
  * subsystems, commands, and button mappings) should be declared here.
  */
 public class RobotContainer {
-  private final SwerveDrive swerveDrive = new SwerveDrive();
+  private final DrivetrainSubsystem drivetrain = new DrivetrainSubsystem();
   private final ArmControl armControl = new ArmControl();
   //private final ClawSubsystem claw = new ClawSubsystem();
 
-  private final Joystick driverJoystick = new Joystick(OIConstants.kDriverControllerPort);
+  private final XboxController controller = new XboxController(OIConstants.kDriverControllerPort);
 
   public RobotContainer() {
-      swerveDrive.setDefaultCommand(new SwerveJoystick(
-              swerveDrive,
-              () -> -driverJoystick.getRawAxis(OIConstants.kDriverYAxis),
-              () -> driverJoystick.getRawAxis(OIConstants.kDriverXAxis),
-              () -> driverJoystick.getRawAxis(OIConstants.kDriverRotAxis),
-              () -> !driverJoystick.getRawButton(OIConstants.kDriverFieldOrientedButtonIdx)));
+    drivetrain.register();
+
+    drivetrain.setDefaultCommand(new DriveCommand(
+            drivetrain,
+            () -> -modifyAxis(controller.getLeftY()), // Axes are flipped here on purpose
+            () -> -modifyAxis(controller.getLeftX()),
+            () -> -modifyAxis(controller.getRightX())
+    ));
 
       configureButtonBindings();
   }
@@ -57,29 +62,55 @@ public class RobotContainer {
 
   private void configureButtonBindings() {
     //Swerve
-    new JoystickButton(driverJoystick,2).whileTrue(Commands.runOnce(() -> swerveDrive.zeroHeading()));
+    new JoystickButton(controller,2).whileTrue(Commands.runOnce(() -> drivetrain.zeroGyroscope()));
     
     //Arm
-    new JoystickButton(driverJoystick,3).onTrue(new Arm(armControl, false, 90, 0.5));
-    new JoystickButton(driverJoystick,4).onTrue(new Arm(armControl, false, 270, 0.5));
+    new JoystickButton(controller,3).onTrue(new Arm(armControl, false, 90, 0.5));
+    new JoystickButton(controller,4).onTrue(new Arm(armControl, false, 270, 0.5));
 
-    new JoystickButton(driverJoystick,7).onTrue(new Arm(armControl, false, 40, 0.5));
+    new JoystickButton(controller,7).onTrue(new Arm(armControl, false, 40, 0.5));
 
     //Further Pole 39.5 | Closer Pole 11.5
-    new JoystickButton(driverJoystick,5).onTrue( new Arm(armControl, false, 110, 20 /* 11.5 */));
-    new JoystickButton(driverJoystick,6).onTrue(new Arm(armControl, false, 115, 39 /* 39.5 */));
+    new JoystickButton(controller,5).onTrue( new Arm(armControl, false, 110, 20 /* 11.5 */));
+    new JoystickButton(controller,6).onTrue(new Arm(armControl, false, 115, 39 /* 39.5 */));
 
-    new JoystickButton(driverJoystick,1).onTrue(new Arm(armControl, -0.3));
-    new JoystickButton(driverJoystick,2).onTrue(new Arm(armControl, 0.3));
+    new JoystickButton(controller,1).onTrue(new Arm(armControl, -0.3));
+    new JoystickButton(controller,2).onTrue(new Arm(armControl, 0.3));
     
-    new JoystickButton(driverJoystick,8).whileTrue(Commands.runOnce(() -> armControl.resetEncoder()));
-    //new JoystickButton(driverJoystick,3).whileTrue(new Arm(armControl, 0, 0.02, 0, 0));
+    new JoystickButton(controller,8).whileTrue(Commands.runOnce(() -> armControl.resetEncoder()));
+    //new JoystickButton(controller,3).whileTrue(new Arm(armControl, 0, 0.02, 0, 0));
     /* 
     //Claw
-    new JoystickButton(driverJoystick, 5).whileTrue(new ClawCMD(claw, true));
-    new JoystickButton(driverJoystick, 6).whileTrue(new ClawCMD(claw, false)); */
+    new JoystickButton(controller, 5).whileTrue(new ClawCMD(claw, true));
+    new JoystickButton(controller, 6).whileTrue(new ClawCMD(claw, false)); */
 
   }
+
+  public DrivetrainSubsystem getDrivetrain() {
+    return drivetrain;
+}
+
+private static double deadband(double value, double deadband) {
+    if (Math.abs(value) > deadband) {
+        if (value > 0.0) {
+            return (value - deadband) / (1.0 - deadband);
+        } else {
+            return (value + deadband) / (1.0 - deadband);
+        }
+    } else {
+        return 0.0;
+    }
+}
+
+private static double modifyAxis(double value) {
+    // Deadband
+    value = deadband(value, 0.05);
+
+    // Square the axis
+    value = Math.copySign(value * value, value);
+
+    return value;
+}
 
   /* public Command getAutonomousCommand() {
     TrajectoryConfig trajectoryConfig = new TrajectoryConfig(
