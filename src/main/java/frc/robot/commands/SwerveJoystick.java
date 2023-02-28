@@ -2,6 +2,8 @@ package frc.robot.commands;
 
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import java.util.function.Supplier;
+
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
@@ -15,7 +17,7 @@ public class SwerveJoystick extends CommandBase{
     private final SwerveDrive swerveDrive;
     private final Supplier<Double> xSpdFunction, ySpdFunction, tSpdFunction;
     private final Supplier<Boolean> fieldOrientedFunction;
-    private final SlewRateLimiter xLimiter, yLimiter, tLimiter;
+    private final SlewRateLimiter m_xspeedLimiter, m_yspeedLimiter, m_rotLimiter;
 
     public SwerveJoystick(SwerveDrive swerveDrive,
     Supplier<Double> xSpdFunction, Supplier<Double> ySpdFunction, Supplier<Double> tSpdFunction, Supplier<Boolean> fieldOrientedFunction ){
@@ -24,9 +26,9 @@ public class SwerveJoystick extends CommandBase{
         this.ySpdFunction = ySpdFunction;
         this.tSpdFunction = tSpdFunction;
         this.fieldOrientedFunction = fieldOrientedFunction;
-        this.xLimiter = new SlewRateLimiter(DriveConstants.kTeleDriveMaxAccelerationUnitsPerSecond);
-        this.yLimiter = new SlewRateLimiter(DriveConstants.kTeleDriveMaxAccelerationUnitsPerSecond);
-        this.tLimiter = new SlewRateLimiter(DriveConstants.kTeleDriveMaxAngularAccelerationUnitsPerSecond);
+        this.m_xspeedLimiter = new SlewRateLimiter(DriveConstants.kTeleDriveMaxAccelerationUnitsPerSecond);
+        this.m_yspeedLimiter = new SlewRateLimiter(DriveConstants.kTeleDriveMaxAccelerationUnitsPerSecond);
+        this.m_rotLimiter = new SlewRateLimiter(DriveConstants.kTeleDriveMaxAngularAccelerationUnitsPerSecond);
         addRequirements(swerveDrive);
     }
 
@@ -37,42 +39,45 @@ public class SwerveJoystick extends CommandBase{
 
     @Override
     public void execute(){
-    //Joystick inputs
-        double xSpeed = xSpdFunction.get();
-        double ySpeed = ySpdFunction.get();
-        double tSpeed = tSpdFunction.get();
+        //Joystick inputs
+            double xSpeedget = xSpdFunction.get();
+            double ySpeedget = ySpdFunction.get();
+            double tSpeedget = tSpdFunction.get();
 
-    //Deadband
-        xSpeed = Math.abs(xSpeed) > OIConstants.kDeadband ? xSpeed : 0.0;
-        ySpeed = Math.abs(ySpeed) > OIConstants.kDeadband ? ySpeed : 0.0;
-        tSpeed = Math.abs(tSpeed) > OIConstants.kDeadband ? tSpeed : 0.0;
+        //Deadband
+            /* xSpeed = Math.abs(xSpeed) > OIConstants.kDeadband ? xSpeed : 0.0;
+            ySpeed = Math.abs(ySpeed) > OIConstants.kDeadband ? ySpeed : 0.0;
+            tSpeed = Math.abs(tSpeed) > OIConstants.kDeadband ? tSpeed : 0.0; */
+        
+        //Chassis Speed
+        ChassisSpeeds chassisSpeeds;
+        // Get the x speed. We are inverting this because Xbox controllers return
+        // negative values when we push forward.
+        final double xSpeed =
+            -m_xspeedLimiter.calculate(MathUtil.applyDeadband(xSpeedget, 0.3))
+                * SwerveDrive.kMaxSpeed;
 
-    //Smooth Driving
-        xSpeed = xLimiter.calculate(xSpeed) * DriveConstants.kTeleDriveMaxSpeedMetersPerSecond;
-        ySpeed = yLimiter.calculate(ySpeed) * DriveConstants.kTeleDriveMaxSpeedMetersPerSecond;
-        tSpeed = tLimiter.calculate(tSpeed) * DriveConstants.kTeleDriveMaxAngularSpeedRadiansPerSecond;
-    
-    //Chassis Speed
-    ChassisSpeeds chassisSpeeds;
-    if (fieldOrientedFunction.get()) {
-        //Relative to field
-        chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
-                xSpeed, ySpeed, tSpeed, swerveDrive.getRotation2d());
-        } else{
-            //Relative to robot
-            chassisSpeeds = new ChassisSpeeds(xSpeed, ySpeed, tSpeed);
-        }
+        // Get the y speed or sideways/strafe speed. We are inverting this because
+        // we want a positive value when we pull to the left. Xbox controllers
+        // return positive values when you pull to the right by default.
+        final double ySpeed =
+            -m_yspeedLimiter.calculate(MathUtil.applyDeadband(ySpeedget, 0.3))
+                * SwerveDrive.kMaxSpeed;
 
-        //Convert chassis Speeds to individual module states 
-        SwerveModuleState[] moduleStates = DriveConstants.kDriveKinematics.toSwerveModuleStates(chassisSpeeds);
+        // Get the rate of angular rotation. We are inverting this because we want a
+        // positive value when we pull to the left (remember, CCW is positive in
+        // mathematics). Xbox controllers return positive values when you pull to
+        // the right by default.
+        final double rot =
+            -m_rotLimiter.calculate(MathUtil.applyDeadband(tSpeedget, 0.3))
+                * SwerveDrive.kMaxAngularSpeed;
 
-        //Output each module states to wheels
-        swerveDrive.setModuleStates(moduleStates);
+                swerveDrive.drive(xSpeed, ySpeed, rot, false);
     }
 
     @Override
     public void end(boolean interrupted) {
-        swerveDrive.stopModules();
+        //swerveDrive.stopModules();
     }
 
     @Override

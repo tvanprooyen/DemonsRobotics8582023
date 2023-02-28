@@ -332,10 +332,10 @@ public class ArmControl extends SubsystemBase {
     @Override
     public void periodic() {
 
-        runArmRotation();
+        /* runArmRotation();
         runArmExtention();
 
-        if(!isMotionProfilerunning() && !isArmExtented()/*  && this.timer.get() > 1 */) {
+        if(!isMotionProfilerunning() && !isArmExtented()) { // && this.timer.get() > 1
             if(getArmRotationBuffer() != -1) {
                 setArmRotation(getArmRotationBuffer());
                 setArmRotationBuffer(-1);
@@ -347,7 +347,7 @@ public class ArmControl extends SubsystemBase {
             }
 
             this.timer.stop();
-        }
+        } */
 
 
         dashbard();

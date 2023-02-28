@@ -81,7 +81,7 @@ public class RobotContainer {
 
   }
 
-  public Command getAutonomousCommand() {
+  /* public Command getAutonomousCommand() {
     TrajectoryConfig trajectoryConfig = new TrajectoryConfig(
        AutoConstants.kMaxSpeedMetersPerSecond,
        AutoConstants.kMaxAccelerationMetersPerSecondSquared)
@@ -117,5 +117,5 @@ public class RobotContainer {
       new InstantCommand(() -> swerveDrive.resetOdometry(trajectory.getInitialPose())),
       swerveControllerCommand,
       new InstantCommand(() -> swerveDrive.stopModules()));
-  }
+  } */
 }
