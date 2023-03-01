@@ -23,14 +23,17 @@ import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import frc.robot.Constants.AutoConstants;
-import frc.robot.Constants.DriveConstants;
+//import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.OIConstants;
+import frc.robot.Constants.SDSConstants;
 import frc.robot.commands.Arm;
 import frc.robot.commands.DriveCommand;
+import frc.robot.commands.LEDCMD;
 import frc.robot.commands.SwerveJoystick;
 import frc.robot.subsystems.ArmControl;
 import frc.robot.subsystems.DrivetrainSubsystem;
-import frc.robot.subsystems.SwerveDrive;
+//import frc.robot.subsystems.SwerveDrive;
+import frc.robot.subsystems.LEDControl;
 
 
 /**
@@ -42,7 +45,12 @@ import frc.robot.subsystems.SwerveDrive;
 public class RobotContainer {
   private final DrivetrainSubsystem drivetrain = new DrivetrainSubsystem();
   private final ArmControl armControl = new ArmControl();
+  private final LEDControl ledControl1 = new LEDControl(0);/* 
+  private final LEDControl ledControl2 = new LEDControl(1);
+  private final LEDControl ledControl3 = new LEDControl(8);
+  private final LEDControl ledControl4 = new LEDControl(9); */
   //private final ClawSubsystem claw = new ClawSubsystem();
+  
 
   private final XboxController controller = new XboxController(OIConstants.kDriverControllerPort);
 
@@ -51,9 +59,9 @@ public class RobotContainer {
 
     drivetrain.setDefaultCommand(new DriveCommand(
             drivetrain,
-            () -> -modifyAxis(controller.getLeftY()), // Axes are flipped here on purpose
-            () -> -modifyAxis(controller.getLeftX()),
-            () -> -modifyAxis(controller.getRightX())
+            () -> modifyAxis(controller.getLeftY()), // Axes are flipped here on purpose
+            () -> modifyAxis(controller.getLeftX()),
+            () -> modifyAxis(controller.getRightX())
     ));
 
       configureButtonBindings();
@@ -62,17 +70,19 @@ public class RobotContainer {
 
   private void configureButtonBindings() {
     //Swerve
-    new JoystickButton(controller,2).whileTrue(Commands.runOnce(() -> drivetrain.zeroGyroscope()));
+    //new JoystickButton(controller,2).whileTrue(Commands.runOnce(() -> drivetrain.zeroGyroscope()));
     
+    new JoystickButton(controller,2).whileTrue(new InstantCommand(drivetrain::zeroGyroscope));
+
     //Arm
-    new JoystickButton(controller,3).onTrue(new Arm(armControl, false, 90, 0.5));
+   /* new JoystickButton(controller,3).onTrue(new Arm(armControl, false, 90, 0.5));
     new JoystickButton(controller,4).onTrue(new Arm(armControl, false, 270, 0.5));
 
-    new JoystickButton(controller,7).onTrue(new Arm(armControl, false, 40, 0.5));
+    new JoystickButton(controller,7).onTrue(new Arm(armControl, false, 40, 0.5));*/
 
     //Further Pole 39.5 | Closer Pole 11.5
-    new JoystickButton(controller,5).onTrue( new Arm(armControl, false, 110, 20 /* 11.5 */));
-    new JoystickButton(controller,6).onTrue(new Arm(armControl, false, 115, 39 /* 39.5 */));
+    /*new JoystickButton(controller,5).onTrue( new Arm(armControl, false, 110, 20 /* 11.5 ));
+    new JoystickButton(controller,6).onTrue(new Arm(armControl, false, 115, 39 /* 39.5 ));
 
     new JoystickButton(controller,1).onTrue(new Arm(armControl, -0.3));
     new JoystickButton(controller,2).onTrue(new Arm(armControl, 0.3));
@@ -114,9 +124,9 @@ private static double modifyAxis(double value) {
 
   /* public Command getAutonomousCommand() {
     TrajectoryConfig trajectoryConfig = new TrajectoryConfig(
-       AutoConstants.kMaxSpeedMetersPerSecond,
+      AutoConstants.kMaxSpeedMetersPerSecond,
        AutoConstants.kMaxAccelerationMetersPerSecondSquared)
-         .setKinematics(DriveConstants.kDriveKinematics);
+         .setKinematics(drivetrain.kinematics);
 
     Trajectory trajectory = TrajectoryGenerator.generateTrajectory(
       new Pose2d(0, 0, new Rotation2d(0)),
@@ -136,13 +146,13 @@ private static double modifyAxis(double value) {
 
     SwerveControllerCommand swerveControllerCommand = new SwerveControllerCommand(
       trajectory,
-      swerveDrive::getPose,
-      DriveConstants.kDriveKinematics,
+      drivetrain::getPose,
+      drivetrain.kinematics,
       xController,
       yController,
       thetaController,
-      swerveDrive::setModuleStates,
-      swerveDrive);
+      drivetrain::setModuleStates,
+      drivetrain);
 
     return new SequentialCommandGroup(
       new InstantCommand(() -> swerveDrive.resetOdometry(trajectory.getInitialPose())),

@@ -108,23 +108,7 @@ public final class Constants {
         public static final int kFrontRightDriveAbsoluteEncoderPort = 9;
         public static final int kBackRightDriveAbsoluteEncoderPort = 12;
 
-        //dwayne testing
-        /*public static final int kFrontLeftDriveMotorPort = 10;
-        public static final int kBackLeftDriveMotorPort = 9;
-        public static final int kFrontRightDriveMotorPort = 4;
-        public static final int kBackRightDriveMotorPort = 6;
-
-        public static final int kFrontLeftTurningMotorPort = 11;
-        public static final int kBackLeftTurningMotorPort = 8;
-        public static final int kFrontRightTurningMotorPort = 5;
-        public static final int kBackRightTurningMotorPort = 7;
-
-        public static final int kFrontLeftDriveAbsoluteEncoderPort = 26;
-        public static final int kBackLeftDriveAbsoluteEncoderPort = 27;
-        public static final int kFrontRightDriveAbsoluteEncoderPort = 29;
-        public static final int kBackRightDriveAbsoluteEncoderPort = 28;*/
-
-        public static final int kGyroPort = 16; //TODO change when installed!
+        public static final int kGyroPort = 16;
 
         public static final boolean kFrontLeftDriveAbsoluteEncoderReversed = true;
         public static final boolean kBackLeftDriveAbsoluteEncoderReversed = false;

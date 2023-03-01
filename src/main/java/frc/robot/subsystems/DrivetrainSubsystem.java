@@ -13,8 +13,12 @@ import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInLayouts;
+import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
+import edu.wpi.first.wpilibj.shuffleboard.WidgetType;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.SDSConstants;
 
@@ -33,7 +37,11 @@ public class DrivetrainSubsystem extends SubsystemBase {
 
     private final Pigeon2 gyroscope = new Pigeon2(SDSConstants.DRIVETRAIN_PIGEON_ID);
 
-    private final SwerveDriveKinematics kinematics = new SwerveDriveKinematics(
+    private final Field2d fieldWG = new Field2d();
+
+    private final ShuffleboardTab fieldSB = Shuffleboard.getTab("Field");
+
+    public final SwerveDriveKinematics kinematics = new SwerveDriveKinematics(
             new Translation2d(SDSConstants.DRIVETRAIN_TRACKWIDTH_METERS / 2.0, SDSConstants.DRIVETRAIN_WHEELBASE_METERS / 2.0),
             new Translation2d(SDSConstants.DRIVETRAIN_TRACKWIDTH_METERS / 2.0, -SDSConstants.DRIVETRAIN_WHEELBASE_METERS / 2.0),
             new Translation2d(-SDSConstants.DRIVETRAIN_TRACKWIDTH_METERS / 2.0, SDSConstants.DRIVETRAIN_WHEELBASE_METERS / 2.0),
@@ -92,7 +100,7 @@ public class DrivetrainSubsystem extends SubsystemBase {
 
         odometry = new SwerveDriveOdometry(
         kinematics,
-        Rotation2d.fromDegrees(gyroscope.getYaw()),
+        Rotation2d.fromDegrees(getGyroYaw()),
         new SwerveModulePosition[] {
         frontLeftModule.getPosition(),
           frontRightModule.getPosition(),
@@ -103,24 +111,32 @@ public class DrivetrainSubsystem extends SubsystemBase {
         shuffleboardTab.addNumber("Gyroscope Angle", () -> getRotation().getDegrees());
         shuffleboardTab.addNumber("Pose X", () -> odometry.getPoseMeters().getX());
         shuffleboardTab.addNumber("Pose Y", () -> odometry.getPoseMeters().getY());
+
+        //fieldWG.setRobotPose(new Pose2d(odometry.getPoseMeters().getY(), odometry.getPoseMeters().getX(), getRotation()));
+
+        //updateField2d();
+        //fieldSB.add("Robot Pose", fieldWG);
     }
 
-    private void resetPigeon() {
-        /* m_gyro.setAccumZAngle(0) */
-
-        Pigeon2Configuration config = new Pigeon2Configuration();
-
-        config.MountPoseYaw = 0;
-
-        gyroscope.configAllSettings(config);
+    public void updateField2d() {
+        fieldWG.setRobotPose(new Pose2d(odometry.getPoseMeters().getY(), odometry.getPoseMeters().getX(), getRotation()));
     }
 
     public void zeroGyroscope() {
         odometry.resetPosition(
-            Rotation2d.fromDegrees(gyroscope.getYaw()), 
-            null, 
+            Rotation2d.fromDegrees(getGyroYaw()), 
+            new SwerveModulePosition[] {
+                frontLeftModule.getPosition(),
+                frontRightModule.getPosition(),
+                backLeftModule.getPosition(),
+                backRightModule.getPosition()
+            }, 
             new Pose2d(odometry.getPoseMeters().getTranslation(), Rotation2d.fromDegrees(0.0))
         );
+    }
+
+    public double getGyroYaw() {
+        return gyroscope.getYaw();
     }
 
     public Rotation2d getRotation() {
@@ -135,20 +151,13 @@ public class DrivetrainSubsystem extends SubsystemBase {
     public void periodic() {
 
         odometry.update(
-        Rotation2d.fromDegrees(gyroscope.getYaw()),
+        Rotation2d.fromDegrees(getGyroYaw()),
         new SwerveModulePosition[] {
             frontLeftModule.getPosition(),
             frontRightModule.getPosition(),
             backLeftModule.getPosition(),
             backRightModule.getPosition()
         });
-
-        /* odometry.update(Rotation2d.fromDegrees(gyroscope.getFusedHeading()),
-                new SwerveModuleState(frontLeftModule.getDriveVelocity(), new Rotation2d(frontLeftModule.getSteerAngle())),
-                new SwerveModuleState(frontRightModule.getDriveVelocity(), new Rotation2d(frontRightModule.getSteerAngle())),
-                new SwerveModuleState(backLeftModule.getDriveVelocity(), new Rotation2d(backLeftModule.getSteerAngle())),
-                new SwerveModuleState(backRightModule.getDriveVelocity(), new Rotation2d(backRightModule.getSteerAngle()))
-        ); */
 
         SwerveModuleState[] states = kinematics.toSwerveModuleStates(chassisSpeeds);
 

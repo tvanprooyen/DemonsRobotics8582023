@@ -1,9 +1,11 @@
 package frc.robot.commands;
 
+import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.subsystems.DrivetrainSubsystem;
 
+import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 
 public class DriveCommand extends CommandBase {
@@ -47,4 +49,9 @@ public class DriveCommand extends CommandBase {
         // Stop the drivetrain
         drivetrain.drive(new ChassisSpeeds(0.0, 0.0, 0.0));
     }
+
+    public DrivetrainSubsystem getDrivetrain() {
+        return drivetrain;
+    }
+
 }
