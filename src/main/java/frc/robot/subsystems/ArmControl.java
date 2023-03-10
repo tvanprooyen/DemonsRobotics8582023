@@ -22,8 +22,6 @@ public class ArmControl extends SubsystemBase {
 
     private final AbsoluteEncoder rotEncoder, extEncoder;
 
-    private final Timer timer = new Timer();
-
     private PIDController rotPID, extPID;
 
     private double ArmRotationSet, ExtentionSet;
@@ -66,8 +64,6 @@ public class ArmControl extends SubsystemBase {
         this.ArmRotationError = 0;
         this.ArmExtentionError = 0;
 
-        this.timer.reset();
-
         extMotor.setIdleMode(IdleMode.kBrake);
 
         //resetExtentionCount();
@@ -75,36 +71,59 @@ public class ArmControl extends SubsystemBase {
 
     //----------------------------Arm Rotation----------------------------//
 
-    //rotation
+    /**
+     * @return Rotation Encoder Posistion (Set in Spark max as 0-360 deg)
+     */
     public double getRotationPosition(){
         
         return rotEncoder.getPosition();
     }
 
+    /**
+     * @param ArmRotationSet Sets the Arm Rotation PID Set Point
+     */
     public void setArmRotation (double ArmRotationSet){
         this.ArmRotationSet = ArmRotationSet;
     }
 
+    /**
+     * @return Rotation PID Set Point
+     */
     public double getArmRotation() {
         return this.ArmRotationSet;
     }
 
+    /**
+     * @param ArmRotationSetBuffer Sets the Arm Rotation PID Set Point Buffer (Saves point for motion to finish)
+     */
     public void setArmRotationBuffer(double ArmRotationSetBuffer) {
         this.ArmRotationSetBuffer = ArmRotationSetBuffer;
     }
 
+    /**
+     * @return Rotation PID Set Point Buffer (Saves point for motion to finish)
+     */
     public double getArmRotationBuffer() {
         return this.ArmRotationSetBuffer;
     }
 
+    /**
+     * @param ArmRotationSetBuffer Sets the Arm Rotation PID Error (Shows current error to setpoint, goal is 0)
+     */
     public void setArmRotationError(double ArmRotationError) {
         this.ArmRotationError = ArmRotationError;
     }
 
+    /**
+     * @return Rotation PID Set Point Error (Shows current error to setpoint, goal is 0)
+     */
     public double getArmRotationError() {
         return this.ArmRotationError;
     }
 
+    /**
+     * Tells us if the arm is still rotating within a tolerance
+     */
     public boolean isArmRotationRunning() {
         //Acceptable Range to say its finished, There will always be an error in PID. Never fully reaches 0;
         double rotationTol = 0.03; //TODO CHANGE THIS WHEN TESTING
@@ -112,9 +131,19 @@ public class ArmControl extends SubsystemBase {
         return (getArmRotationError() < -rotationTol) && (getArmRotationError() > rotationTol);
     }
 
+    /**
+     * Runs the Arm Rotation sequence
+     */
     public void runArmRotation() {
+        runArmRotation(0.2);
+    }
+
+    /**
+     * Runs the Arm Rotation sequence
+     * @param speedLimiter Maximum speed. Keeps the PID from going to fast to reach setpoint
+     */
+    public void runArmRotation(double speedLimiter) {
         double ArmRotationFuturePosition = 0;
-        double speedLimiter = 0.2;
 
             ArmRotationFuturePosition = rotPID.calculate(getRotationPosition(), getArmRotation());
 
@@ -177,6 +206,9 @@ public class ArmControl extends SubsystemBase {
         this.ExtentionSet = ExtentionSet;
     }
 
+    /**
+     * @return Arm Extention PID Set Point
+     */
     public double getArmExtention() {
         return this.ExtentionSet;
     }
@@ -185,6 +217,9 @@ public class ArmControl extends SubsystemBase {
         this.ArmExtentionSetBuffer = ArmExtentionSetBuffer;
     }
 
+    /**
+     * @return Arm Extention PID Set Point Buffer (Saves Set Point for Later)
+     */
     public double getArmExtentionBuffer() {
         return this.ArmExtentionSetBuffer;
     }
@@ -193,13 +228,27 @@ public class ArmControl extends SubsystemBase {
         this.ArmExtentionError = ArmExtentionError;
     }
 
+    /**
+     * @return Extention PID Set Point Error (Shows current error to setpoint, goal is 0)
+     */
     public double getArmExtentionError() {
         return this.ArmExtentionError;
     }
 
+    /**
+     * @return if arm is extended pass 1 inch (default)
+     */
     public boolean isArmExtented() {
+        return isArmExtented(1);
+    }
+
+    /**
+     * @param extentionTol Tolerace to say arm is extended passed
+     * @return if arm is extended pass the set amount
+     */
+    public boolean isArmExtented(double extentionTol) {
         //Get Possible Position or Actual Position
-        return getArmExtention() > 1 || getExtentionPosition() > 1;
+        return getArmExtention() > extentionTol || getExtentionPosition() > extentionTol;
     }
 
     public boolean isArmInPosistion() {
@@ -320,9 +369,6 @@ public class ArmControl extends SubsystemBase {
             
         }
 
-
-        this.timer.reset();
-        this.timer.start();
         return true;
         
     }
@@ -342,21 +388,19 @@ public class ArmControl extends SubsystemBase {
     @Override
     public void periodic() {
 
-        runArmRotation();
+        runArmRotation(0.2);
         runArmExtention();
 
-        if(!isMotionProfilerunning() && !isArmExtented()) { // && this.timer.get() > 1
+        if(!isMotionProfilerunning() && !isArmExtented()) {
             if(getArmRotationBuffer() != -1) {
                 setArmRotation(getArmRotationBuffer());
                 setArmRotationBuffer(-1);
             }
 
-            if(getArmExtentionBuffer() != -1) {
+            if(getArmExtentionBuffer() != -1 && (isArmInPosistion() && getArmRotationBuffer() == -1)) {
                 setArmExtention(getArmExtentionBuffer());
                 setArmExtentionBuffer(-1);
             }
-
-            this.timer.stop();
         }
 
 
@@ -397,21 +441,3 @@ public class ArmControl extends SubsystemBase {
         
     }
 }
-
-
-
-
-
-/* public void runExtentionSpeed() {
-    double ArmExtentionFuturePosition;
-
-if(ExtentionSet == 0) {
-    ArmExtentionFuturePosition = extPID.calculate(getExtentionPosition(), ExtentionSet);
-
-    extMotor.set(ArmExtentionFuturePosition);
-} else {
-    ExtentionSet = getExtentionPosition();
-}
-
-extMotor.set(this.ExtentionSpeed);
-} */

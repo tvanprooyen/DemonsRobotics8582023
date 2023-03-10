@@ -3,22 +3,21 @@ package frc.robot.subsystems;
 import edu.wpi.first.wpilibj.AddressableLED;
 import edu.wpi.first.wpilibj.AddressableLEDBuffer;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.PWM;
 import edu.wpi.first.wpilibj.DriverStation.MatchType;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.Robot;
 import frc.robot.Util.MatchData;
 
 public class LEDControl extends SubsystemBase {
     //private final PWM FRLED,BRLED,FLLED,BLLED;
-    private AddressableLED m_Led, m_Led2, m_Led3, m_Led4;
+    private AddressableLED m_Led;
     private AddressableLEDBuffer m_LedBuffer;
     private double zeroPos = 0;
     private int ledIndex = 0;
-    private Boolean YellowToggle = true;
     private int FadeConstant = 0;
     private int FadeAdder = 5;
+
+    private int YellowPurpleIndication;
 
     private int AdPort;
 
@@ -45,10 +44,6 @@ public class LEDControl extends SubsystemBase {
     }
 
     public LEDControl() {
-        /* FRLED = new PWM(0);
-        BRLED = new PWM(1);
-        FLLED = new PWM(8);
-        BLLED = new PWM(9); */
 
         this.mData = new MatchData();
 
@@ -57,6 +52,8 @@ public class LEDControl extends SubsystemBase {
         this.m_Led.setLength(this.m_LedBuffer.getLength());
         this.m_Led.setData(this.m_LedBuffer);
         this.m_Led.start();
+
+        this.YellowPurpleIndication = 0;
         
 
         this.selectedAnimation = LEDAnimation.FADE;
@@ -74,6 +71,25 @@ public class LEDControl extends SubsystemBase {
       return this.AdPort;
     }
 
+    /**
+     * @param YellowPurpleIndication 0 = resume, 1 = yellow, 2 = purple
+     */
+    public void setIndication(int YellowPurpleIndication) {
+      if(YellowPurpleIndication > 2) {
+        YellowPurpleIndication = 0;
+      }
+
+      if(YellowPurpleIndication < 0) {
+        YellowPurpleIndication = 0;
+      }
+
+      this.YellowPurpleIndication = YellowPurpleIndication;
+    }
+
+    public int getIndication() {
+      return this.YellowPurpleIndication;
+    }
+
     public void selectAnimation(LEDAnimation selectedAnimation) {
         this.selectedAnimation = selectedAnimation;
     }
@@ -86,7 +102,7 @@ public class LEDControl extends SubsystemBase {
     public void periodic() {
 
         /* 
-         NONE(0),
+        NONE(0),
         FADE(1),
         YELLOW(2),
         REDBLUE(3),
@@ -95,15 +111,19 @@ public class LEDControl extends SubsystemBase {
          */
 
          if(mData.getGetGameMode() == 0) {
-          SmartDashboard.putNumber("Event Name", DriverStation.getMatchNumber());
             if(DriverStation.getMatchType() == MatchType.None) {
               this.selectedAnimation = LEDAnimation.PURPLE;
             } else {
               this.selectedAnimation = LEDAnimation.NONE;
             }
-
          } else if(mData.getGetGameMode() > 0) {
-          this.selectedAnimation = LEDAnimation.FADE;
+          if(getIndication() == 1) {
+            this.selectedAnimation = LEDAnimation.YELLOW;
+          } else if(getIndication() == 2) {
+            this.selectedAnimation = LEDAnimation.PURPLE;
+          } else {
+            this.selectedAnimation = LEDAnimation.FADE;
+          }
          }
         
 
@@ -179,14 +199,16 @@ public class LEDControl extends SubsystemBase {
     ledIndex++;
     if(ledIndex >= 80) ledIndex = 0;
   }
-  private void ChaseWhileHeld(int r,int b,int g){
+
+
+  /* private void ChaseWhileHeld(int r,int b,int g){
     if( ledIndex + 5 < m_LedBuffer.getLength()){
       for( int i = 0; i < 4; i++){
         this.m_LedBuffer.setRGB(ledIndex+i,r, g, b);
       }
       ledIndex+=4;
     }
-  }
+  } */
 
   private void allColor(int r, int g, int b){
     for (int i = 0; i < this.m_LedBuffer.getLength(); i++) {
