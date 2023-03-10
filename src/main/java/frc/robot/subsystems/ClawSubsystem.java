@@ -7,27 +7,29 @@ import edu.wpi.first.math.controller.PIDController;
 
 public class ClawSubsystem extends SubsystemBase {
     private CANSparkMax m_claw;
-    private PIDController pid;
+    private CANSparkMax m_claw2;
+
+    private double ClawSpeed;
 
     public ClawSubsystem(){
-        pid = new PIDController(0, 0, 0);
         m_claw = new CANSparkMax(15, MotorType.kBrushless);
+        m_claw2 = new CANSparkMax(17, MotorType.kBrushless);
+
+        this.ClawSpeed = 0;
     }
 
-    public double getEncoderValue(){
-        return m_claw.getEncoder().getPosition();
+    public void setSpeed(double ClawSpeed){
+        this.ClawSpeed = ClawSpeed;
     }
 
-    public void setposition(double position){
-        m_claw.set(pid.calculate(  getEncoderValue(), position));
+    private double getSpeed() {
+        return this.ClawSpeed;
     }
 
-    public void setSpeed(double speed){
-        m_claw.set(speed);
-    }
-
-    public double getCurrent(){
-        return m_claw.getOutputCurrent();
+    @Override
+    public void periodic() {
+        m_claw.set(getSpeed());
+        m_claw2.set(-getSpeed());
     }
 
 }

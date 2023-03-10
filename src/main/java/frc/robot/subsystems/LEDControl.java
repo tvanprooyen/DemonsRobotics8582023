@@ -4,7 +4,11 @@ import edu.wpi.first.wpilibj.AddressableLED;
 import edu.wpi.first.wpilibj.AddressableLEDBuffer;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.PWM;
+import edu.wpi.first.wpilibj.DriverStation.MatchType;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Robot;
+import frc.robot.Util.MatchData;
 
 public class LEDControl extends SubsystemBase {
     //private final PWM FRLED,BRLED,FLLED,BLLED;
@@ -20,6 +24,8 @@ public class LEDControl extends SubsystemBase {
 
     public LEDAnimation selectedAnimation;
 
+    private MatchData mData;
+
     public enum LEDAnimation {
         NONE(0),
         FADE(1),
@@ -27,7 +33,8 @@ public class LEDControl extends SubsystemBase {
         REDBLUE(3),
         CHASE(4),
         BLUE(5),
-        PURPLE(6);
+        PURPLE(6),
+        RED(7);
 
 
         private int selectedAnimation;
@@ -37,25 +44,26 @@ public class LEDControl extends SubsystemBase {
         }
     }
 
-    public LEDControl(int Port) {
+    public LEDControl() {
         /* FRLED = new PWM(0);
         BRLED = new PWM(1);
         FLLED = new PWM(8);
         BLLED = new PWM(9); */
 
-        
+        this.mData = new MatchData();
 
-        this.m_Led = new AddressableLED(Port);/* 
-        this.m_Led2 = new AddressableLED(1);
-        this.m_Led3 = new AddressableLED(8);
-        this.m_Led4 = new AddressableLED(9); */
-        this.m_LedBuffer = new AddressableLEDBuffer(24);
+        this.m_Led = new AddressableLED(0);
+        this.m_LedBuffer = new AddressableLEDBuffer(128);
         this.m_Led.setLength(this.m_LedBuffer.getLength());
         this.m_Led.setData(this.m_LedBuffer);
         this.m_Led.start();
         
 
-        this.selectedAnimation = LEDAnimation.PURPLE;
+        this.selectedAnimation = LEDAnimation.FADE;
+    }
+
+    public MatchData getMatchData() {
+      return mData;
     }
 
     public void setPort(int AdPort) {
@@ -86,6 +94,19 @@ public class LEDControl extends SubsystemBase {
         BLUE(5)
          */
 
+         if(mData.getGetGameMode() == 0) {
+          SmartDashboard.putNumber("Event Name", DriverStation.getMatchNumber());
+            if(DriverStation.getMatchType() == MatchType.None) {
+              this.selectedAnimation = LEDAnimation.PURPLE;
+            } else {
+              this.selectedAnimation = LEDAnimation.NONE;
+            }
+
+         } else if(mData.getGetGameMode() > 0) {
+          this.selectedAnimation = LEDAnimation.FADE;
+         }
+        
+
         switch (getLEDAnimation().selectedAnimation) {
             case 0: DisabledAnimation(); break;
             case 1: Fade(); break;
@@ -94,6 +115,7 @@ public class LEDControl extends SubsystemBase {
             case 4: ChaseLed(); break;
             case 5: Blue(); break;
             case 6: Purple(); break;
+            case 7: Red(); break;
             default: Purple(); break;
         }
 
@@ -119,6 +141,10 @@ public class LEDControl extends SubsystemBase {
 
     private void Blue(){
         allColor(0,0,255);
+    }
+
+    private void Red(){
+      allColor(255,0,0);
     }
 
     private void Purple(){

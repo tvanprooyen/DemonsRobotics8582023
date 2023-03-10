@@ -8,6 +8,7 @@ import java.util.List;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
+import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -30,7 +31,9 @@ import frc.robot.commands.Arm;
 import frc.robot.commands.DriveCommand;
 import frc.robot.commands.LEDCMD;
 import frc.robot.commands.SwerveJoystick;
+import frc.robot.commands.ClawCMD;
 import frc.robot.subsystems.ArmControl;
+import frc.robot.subsystems.ClawSubsystem;
 import frc.robot.subsystems.DrivetrainSubsystem;
 //import frc.robot.subsystems.SwerveDrive;
 import frc.robot.subsystems.LEDControl;
@@ -45,11 +48,13 @@ import frc.robot.subsystems.LEDControl;
 public class RobotContainer {
   private final DrivetrainSubsystem drivetrain = new DrivetrainSubsystem();
   private final ArmControl armControl = new ArmControl();
-  private final LEDControl ledControl1 = new LEDControl(0);/* 
-  private final LEDControl ledControl2 = new LEDControl(1);
-  private final LEDControl ledControl3 = new LEDControl(8);
-  private final LEDControl ledControl4 = new LEDControl(9); */
-  //private final ClawSubsystem claw = new ClawSubsystem();
+  private final LEDControl ledControl1 = new LEDControl();
+  private final ClawSubsystem claw = new ClawSubsystem();
+
+
+  private final SlewRateLimiter xLimiter = new SlewRateLimiter(15);
+  private final SlewRateLimiter yLimiter = new SlewRateLimiter(15);
+  private final SlewRateLimiter rotLimiter = new SlewRateLimiter(15);
   
 
   private final XboxController controller = new XboxController(OIConstants.kDriverControllerPort);
@@ -59,12 +64,16 @@ public class RobotContainer {
 
     drivetrain.setDefaultCommand(new DriveCommand(
             drivetrain,
-            () -> modifyAxis(controller.getLeftY()), // Axes are flipped here on purpose
-            () -> modifyAxis(controller.getLeftX()),
-            () -> modifyAxis(controller.getRightX())
+            () -> xLimiter.calculate(modifyAxis(controller.getLeftY())), // Axes are flipped here on purpose
+            () -> yLimiter.calculate(modifyAxis(controller.getLeftX())),
+            () -> rotLimiter.calculate(modifyAxis(controller.getRightX()))
     ));
 
       configureButtonBindings();
+  }
+
+  public LEDControl getLedControl() {
+    return ledControl1;
   }
 
 
@@ -80,6 +89,16 @@ public class RobotContainer {
 
     new JoystickButton(controller,7).onTrue(new Arm(armControl, false, 40, 0.5));*/
 
+    new JoystickButton(controller,5).onTrue(new Arm(armControl, false, 100, 10));
+
+    new JoystickButton(controller,1).onTrue(new Arm(armControl, false, 50, 0));
+
+    new JoystickButton(controller,6).onTrue(new Arm(armControl, false, 115, 36));
+
+    new JoystickButton(controller, 7).onTrue(new Arm(armControl, false, 190, 0));
+
+    new JoystickButton(controller, 8).whileTrue(new InstantCommand(armControl::resetEncoder));
+
     //Further Pole 39.5 | Closer Pole 11.5
     /*new JoystickButton(controller,5).onTrue( new Arm(armControl, false, 110, 20 /* 11.5 ));
     new JoystickButton(controller,6).onTrue(new Arm(armControl, false, 115, 39 /* 39.5 ));
@@ -89,10 +108,10 @@ public class RobotContainer {
     
     new JoystickButton(controller,8).whileTrue(Commands.runOnce(() -> armControl.resetEncoder()));
     //new JoystickButton(controller,3).whileTrue(new Arm(armControl, 0, 0.02, 0, 0));
-    /* 
+    */
     //Claw
-    new JoystickButton(controller, 5).whileTrue(new ClawCMD(claw, true));
-    new JoystickButton(controller, 6).whileTrue(new ClawCMD(claw, false)); */
+    new JoystickButton(controller, 3).whileTrue(new ClawCMD(claw, 0.3));
+    new JoystickButton(controller, 4).whileTrue(new ClawCMD(claw, - 0.3));
 
   }
 
@@ -121,8 +140,8 @@ private static double modifyAxis(double value) {
 
     return value;
 }
-
-  /* public Command getAutonomousCommand() {
+/* 
+   public Command getAutonomousCommand() {
     TrajectoryConfig trajectoryConfig = new TrajectoryConfig(
       AutoConstants.kMaxSpeedMetersPerSecond,
        AutoConstants.kMaxAccelerationMetersPerSecondSquared)
@@ -142,21 +161,26 @@ private static double modifyAxis(double value) {
     PIDController yController = new PIDController(AutoConstants.kPYController, 0, 0);
     ProfiledPIDController thetaController = new ProfiledPIDController(
       AutoConstants.kPThetaController, 0, 0, AutoConstants.kThetaControllerConstraints);
-    thetaController.enableContinuousInput(-Math.PI, Math.PI);
+    thetaController.enableContinuousInput(-Math.PI, Math.PI); */
 
+    
+
+    //SwerveControllerCommand s = new SwerveControllerCommand(trajectory, drivetrain::robotPose, drivetrain.kinematics, xController, yController, thetaController, null, drivetrain);
+    /* 
     SwerveControllerCommand swerveControllerCommand = new SwerveControllerCommand(
       trajectory,
-      drivetrain::getPose,
+      (drivetrain::getPos),
       drivetrain.kinematics,
       xController,
       yController,
       thetaController,
       drivetrain::setModuleStates,
       drivetrain);
+      */
 
-    return new SequentialCommandGroup(
+    /* return new SequentialCommandGroup(
       new InstantCommand(() -> swerveDrive.resetOdometry(trajectory.getInitialPose())),
       swerveControllerCommand,
-      new InstantCommand(() -> swerveDrive.stopModules()));
-  } */
+      new InstantCommand(() -> swerveDrive.stopModules()));  
+  }*/
 }

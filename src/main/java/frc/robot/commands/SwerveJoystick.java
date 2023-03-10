@@ -55,14 +55,14 @@ public class SwerveJoystick extends CommandBase{
         // negative values when we push forward.
         final double xSpeed =
             -m_xspeedLimiter.calculate(MathUtil.applyDeadband(xSpeedget, 0.3))
-                * SwerveDrive.kMaxSpeed;
+                * SwerveDrive.kMaxSpeed / 5;
 
         // Get the y speed or sideways/strafe speed. We are inverting this because
         // we want a positive value when we pull to the left. Xbox controllers
         // return positive values when you pull to the right by default.
         final double ySpeed =
             -m_yspeedLimiter.calculate(MathUtil.applyDeadband(ySpeedget, 0.3))
-                * SwerveDrive.kMaxSpeed;
+                * SwerveDrive.kMaxSpeed / 5;
 
         // Get the rate of angular rotation. We are inverting this because we want a
         // positive value when we pull to the left (remember, CCW is positive in
@@ -70,7 +70,7 @@ public class SwerveJoystick extends CommandBase{
         // the right by default.
         final double rot =
             -m_rotLimiter.calculate(MathUtil.applyDeadband(tSpeedget, 0.3))
-                * SwerveDrive.kMaxAngularSpeed;
+                * SwerveDrive.kMaxAngularSpeed / 5;
 
                 swerveDrive.drive(xSpeed, ySpeed, rot, false);
     }

@@ -39,11 +39,14 @@ public class ArmControl extends SubsystemBase {
     private boolean stopControl;
 
     public ArmControl(){
-        rotPID = new PIDController(0.015, 0.005, 0.00);
-        extPID = new PIDController(0.1, 0, 0);
+        /* rotPID = new PIDController(0.015, 0.005, 0.00);
+        extPID = new PIDController(0.1, 0, 0); */
+
+        rotPID = new PIDController(0.015, 0.00, 0.00);
+        extPID = new PIDController(0.3, 0, 0);
 
         //Arm Rotation Default
-        this.ArmRotationSet = 50;
+        this.ArmRotationSet = 90;
 
         this.ExtentionSpeed = 0;
 
@@ -111,9 +114,7 @@ public class ArmControl extends SubsystemBase {
 
     public void runArmRotation() {
         double ArmRotationFuturePosition = 0;
-        double speedLimiter = 0.3;
-
-        if(!this.stopControl) {
+        double speedLimiter = 0.2;
 
             ArmRotationFuturePosition = rotPID.calculate(getRotationPosition(), getArmRotation());
 
@@ -154,7 +155,6 @@ public class ArmControl extends SubsystemBase {
                     ArmRotationFuturePosition = 0;
                 }
             }
-        }
 
         rotMotor.set(ArmRotationFuturePosition);
     }
@@ -202,9 +202,18 @@ public class ArmControl extends SubsystemBase {
         return getArmExtention() > 1 || getExtentionPosition() > 1;
     }
 
+    public boolean isArmInPosistion() {
+        //Get Possible Position or Actual Position
+        double extentionTol = 1; //TODO CHANGE THIS WHEN TESTING
+
+        return (getExtentionPosition() > (getArmExtention() - extentionTol)) && (getExtentionPosition() < (getArmExtention() + extentionTol));
+
+        //return getArmExtention() > 1 || getExtentionPosition() > 1;
+    }
+
     public boolean isArmExtentionRunning() {
         //Acceptable Range to say its finished, There will always be an error in PID. Never fully reaches 0;
-        double extentionTol = 0.03; //TODO CHANGE THIS WHEN TESTING
+        double extentionTol = 0.3; //TODO CHANGE THIS WHEN TESTING
 
         return (getArmExtentionError() < -extentionTol) && (getArmExtentionError() > extentionTol);
     }
@@ -231,12 +240,13 @@ public class ArmControl extends SubsystemBase {
         double ArmExtentionFuturePosition = 0;
         double speedLimiter = 0.65;
 
+        ArmExtentionFuturePosition = extPID.calculate(getExtentionPosition(), getArmExtention());
+
+        setArmExtentionError(ArmExtentionFuturePosition);
+
         if(!this.stopControl) {
             if(isExtentionEncoderReset == true && getArmExtentionSpeed() == -2){
                 
-                ArmExtentionFuturePosition = extPID.calculate(getExtentionPosition(), getArmExtention());
-
-                setArmExtentionError(ArmExtentionFuturePosition);
 
                 if(ArmExtentionFuturePosition > speedLimiter) {
                     ArmExtentionFuturePosition = speedLimiter;
@@ -332,7 +342,7 @@ public class ArmControl extends SubsystemBase {
     @Override
     public void periodic() {
 
-        /* runArmRotation();
+        runArmRotation();
         runArmExtention();
 
         if(!isMotionProfilerunning() && !isArmExtented()) { // && this.timer.get() > 1
@@ -347,7 +357,7 @@ public class ArmControl extends SubsystemBase {
             }
 
             this.timer.stop();
-        } */
+        }
 
 
         dashbard();
@@ -369,15 +379,21 @@ public class ArmControl extends SubsystemBase {
 
         SmartDashboard.putNumber("Arm Extention Error", getArmExtentionError());
 
-        SmartDashboard.putNumber("Arm Extention Voltage", getArmRotationError() * PD.getVoltage());
+        SmartDashboard.putNumber("Arm Extention Voltage", Math.abs(getArmRotationError() * PD.getVoltage()));
 
-        SmartDashboard.putNumber("Arm Rotation Voltage", getArmExtentionError() * PD.getVoltage());
+        SmartDashboard.putNumber("Arm Rotation Voltage", Math.abs(getArmExtentionError() * PD.getVoltage()));
 
         SmartDashboard.putBoolean("Arm Rotating", isArmRotationRunning());
 
         SmartDashboard.putBoolean("Arm Extending", isArmExtentionRunning());
 
         SmartDashboard.putBoolean("Arm Extended", isArmExtented());
+
+        SmartDashboard.putNumber("Arm Extention Set", getArmExtention());
+
+        SmartDashboard.putBoolean("Arm In Posistion", isArmInPosistion());
+
+        SmartDashboard.putBoolean("In Arm Posistion Tol", getExtentionPosition() < -(getArmExtention() - 1));
         
     }
 }

@@ -1,5 +1,7 @@
 package frc.robot.subsystems;
 
+import java.util.function.Supplier;
+
 import com.ctre.phoenix.sensors.Pigeon2;
 import com.ctre.phoenix.sensors.Pigeon2Configuration;
 import com.swervedrivespecialties.swervelib.Mk4iSwerveModuleHelper;
@@ -135,6 +137,15 @@ public class DrivetrainSubsystem extends SubsystemBase {
         );
     }
 
+    public Pose2d robotPose() {
+        return new Pose2d(odometry.getPoseMeters().getTranslation(), Rotation2d.fromDegrees(0.0));
+    }
+
+
+    public SwerveModuleState[] robotModuleStates(){
+        return kinematics.toSwerveModuleStates(chassisSpeeds);
+    }
+
     public double getGyroYaw() {
         return gyroscope.getYaw();
     }
@@ -166,4 +177,16 @@ public class DrivetrainSubsystem extends SubsystemBase {
         backLeftModule.set(states[2].speedMetersPerSecond / MAX_VELOCITY_METERS_PER_SECOND * MAX_VOLTAGE, states[2].angle.getRadians());
         backRightModule.set(states[3].speedMetersPerSecond / MAX_VELOCITY_METERS_PER_SECOND * MAX_VOLTAGE, states[3].angle.getRadians());
     }
+
+
+   
+    public <Supplier>Pose2d getPos() {
+        return odometry.getPoseMeters();
+    }
+
+
+
+   
+
+
 }

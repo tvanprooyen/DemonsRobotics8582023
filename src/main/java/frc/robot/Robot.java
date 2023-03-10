@@ -6,6 +6,8 @@ package frc.robot;
 
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.robot.Util.MatchData;
+import frc.robot.subsystems.LEDControl;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -16,6 +18,8 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 public class Robot extends TimedRobot {
 
   private RobotContainer m_robotContainer;
+  public MatchData mData;
+  public LEDControl ledControl;
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -26,6 +30,9 @@ public class Robot extends TimedRobot {
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
     m_robotContainer = new RobotContainer();
+    ledControl = m_robotContainer.getLedControl();
+    mData = ledControl.getMatchData();
+    mData.setGetGameMode(0);
   }
 
   /**
@@ -49,7 +56,7 @@ public class Robot extends TimedRobot {
 
   /** This function is called once each time the robot enters Disabled mode. */
   @Override
-  public void disabledInit() {}
+  public void disabledInit() {mData.setGetGameMode(0);}
 
   @Override
   public void disabledPeriodic() {}
@@ -57,6 +64,7 @@ public class Robot extends TimedRobot {
   /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
   @Override
   public void autonomousInit() {
+    mData.setGetGameMode(1);
    // m_autonomousCommand = m_robotContainer.getAutonomousCommand();
 
     // schedule the autonomous command (example)
@@ -71,6 +79,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopInit() {
+    mData.setGetGameMode(2);
     // This makes sure that the autonomous stops running when
     // teleop starts running. If you want the autonomous to
     // continue until interrupted by another command, remove
@@ -84,6 +93,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void testInit() {
+    mData.setGetGameMode(3);
     // Cancels all running commands at the start of test mode.
     CommandScheduler.getInstance().cancelAll();
   }
