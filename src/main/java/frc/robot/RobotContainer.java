@@ -17,6 +17,7 @@ import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.math.trajectory.TrajectoryGenerator;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
@@ -27,6 +28,7 @@ import frc.robot.Constants.AutoConstants;
 //import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.OIConstants;
 import frc.robot.Constants.SDSConstants;
+import frc.robot.Util.ToggleSys;
 import frc.robot.commands.Arm;
 import frc.robot.commands.DriveCommand;
 import frc.robot.commands.LEDCMD;
@@ -50,11 +52,12 @@ public class RobotContainer {
   private final LEDControl ledControl1 = new LEDControl();
   private final ClawSubsystem claw = new ClawSubsystem();
 
+  private final ToggleSys toggle = new ToggleSys();
+
 
   private final SlewRateLimiter xLimiter = new SlewRateLimiter(15);
   private final SlewRateLimiter yLimiter = new SlewRateLimiter(15);
   private final SlewRateLimiter rotLimiter = new SlewRateLimiter(15);
-  
 
   private final XboxController controller = new XboxController(OIConstants.kDriverControllerPort);
 
@@ -77,46 +80,63 @@ public class RobotContainer {
 
 
   private void configureButtonBindings() {
-    //Swerve
-    //new JoystickButton(controller,2).whileTrue(Commands.runOnce(() -> drivetrain.zeroGyroscope()));
+
+    // ----------------------------------- RESETS -----------------------------------
+    new JoystickButton(controller,8).whileTrue(new InstantCommand(drivetrain::zeroGyroscope));
+
+    new JoystickButton(controller, 7).whileTrue(new InstantCommand(armControl::resetEncoder));
+
+    if(controller.getRawButtonPressed(2)) {
+      toggle.setToggle(!toggle.getToggle());
+    }
+
+    SmartDashboard.putBoolean("Toggle", toggle.getToggle());
     
-    new JoystickButton(controller,2).whileTrue(new InstantCommand(drivetrain::zeroGyroscope));
+    if(toggle.getToggle()) {
+      // !CONE!
 
-    //Arm
-   /* new JoystickButton(controller,3).onTrue(new Arm(armControl, false, 90, 0.5));
-    new JoystickButton(controller,4).onTrue(new Arm(armControl, false, 270, 0.5));
+      //Arm
+      //Low Goal
+      new JoystickButton(controller,5).onTrue(new Arm(armControl, false, 100, 10));
 
-    new JoystickButton(controller,7).onTrue(new Arm(armControl, false, 40, 0.5));*/
+      //High Goal
+      new JoystickButton(controller,6).onTrue(new Arm(armControl, false, 115, 36));
 
-    new JoystickButton(controller,5).onTrue(new Arm(armControl, false, 100, 10));
+      //Store
+      new JoystickButton(controller,1).onTrue(new Arm(armControl, false, 50, 0));
 
-    new JoystickButton(controller,1).onTrue(new Arm(armControl, false, 50, 0));
+      //new JoystickButton(controller, 2).onTrue(new Arm(armControl, false, 270, 0));
 
-    new JoystickButton(controller,6).onTrue(new Arm(armControl, false, 115, 36));
+      //Claw and Intake Pose
+      new JoystickButton(controller, 3).whileTrue(new ClawCMD(claw, -0.3).alongWith(new Arm(armControl, false, 60, 15)));
 
-    new JoystickButton(controller, 7).onTrue(new Arm(armControl, false, 190, 0));
+    } else {
+      // !CUBE!
 
-    new JoystickButton(controller, 8).whileTrue(new InstantCommand(armControl::resetEncoder));
+      //Arm
+      //Low Goal
+      new JoystickButton(controller,5).whileTrue(new ClawCMD(claw, -0.3).alongWith(new Arm(armControl, false, 100, 10)));
 
-    //Further Pole 39.5 | Closer Pole 11.5
-    /*new JoystickButton(controller,5).onTrue( new Arm(armControl, false, 110, 20 /* 11.5 ));
-    new JoystickButton(controller,6).onTrue(new Arm(armControl, false, 115, 39 /* 39.5 ));
+      //High Goal
+      new JoystickButton(controller,6).onTrue(new Arm(armControl, false, 115, 36));
 
-    new JoystickButton(controller,1).onTrue(new Arm(armControl, -0.3));
-    new JoystickButton(controller,2).onTrue(new Arm(armControl, 0.3));
-    
-    new JoystickButton(controller,8).whileTrue(Commands.runOnce(() -> armControl.resetEncoder()));
-    //new JoystickButton(controller,3).whileTrue(new Arm(armControl, 0, 0.02, 0, 0));
-    */
-    //Claw
-    new JoystickButton(controller, 3).whileTrue(new ClawCMD(claw, 0.3));
-    new JoystickButton(controller, 4).whileTrue(new ClawCMD(claw, - 0.3));
+      //Store
+      new JoystickButton(controller,1).onTrue(new Arm(armControl, false, 50, 0));
+
+      //new JoystickButton(controller, 2).onTrue(new Arm(armControl, false, 270, 0));
+
+      //Claw and Intake Pose
+      new JoystickButton(controller, 3).whileTrue(new ClawCMD(claw, -0.3).alongWith(new Arm(armControl, false, 50, 15)));
+    }
+
+    //Claw Out
+    new JoystickButton(controller, 4).whileTrue(new ClawCMD(claw, 0.3));
 
   }
 
   public DrivetrainSubsystem getDrivetrain() {
-    return drivetrain;
-}
+      return drivetrain;
+  }
 
 private static double deadband(double value, double deadband) {
     if (Math.abs(value) > deadband) {

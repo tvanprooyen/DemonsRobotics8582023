@@ -310,7 +310,7 @@ public class ArmControl extends SubsystemBase {
                 }
             }
 
-            if(getRotationPosition() < 60) {
+            if(getRotationPosition() < 49) {
                 if(ArmExtentionFuturePosition > 0) {
                     ArmExtentionFuturePosition = 0;
                 }
