@@ -49,7 +49,7 @@ import frc.robot.subsystems.LEDControl;
 public class RobotContainer {
   private final DrivetrainSubsystem drivetrain = new DrivetrainSubsystem();
   private final ArmControl armControl = new ArmControl();
-  private final LEDControl ledControl1 = new LEDControl();
+  private final LEDControl ledControl = new LEDControl();
   private final ClawSubsystem claw = new ClawSubsystem();
 
   private final ToggleSys toggle = new ToggleSys();
@@ -75,62 +75,83 @@ public class RobotContainer {
   }
 
   public LEDControl getLedControl() {
-    return ledControl1;
+    return ledControl;
   }
 
 
   private void configureButtonBindings() {
 
+    boolean autoRotate = false;
+
+    /*
+      Reset Buttons
+      Drive Gyro = 8/Start
+      Reset Arm Encoder = 7/Back
+      Low Goal/Single Station = 5/Left Bumper
+      High Goal = 6/Right Bumper
+      Intake = 3/X
+      Release Game Object = 4/Y
+      Store Arm = 1/A
+    */
+
     // ----------------------------------- RESETS -----------------------------------
-    new JoystickButton(controller,8).whileTrue(new InstantCommand(drivetrain::zeroGyroscope));
+    new JoystickButton(controller,8)
+    .whileTrue(
+      new InstantCommand(drivetrain::zeroGyroscope)
+    );
 
-    new JoystickButton(controller, 7).whileTrue(new InstantCommand(armControl::resetEncoder));
-
-    if(controller.getRawButtonPressed(2)) {
-      toggle.setToggle(!toggle.getToggle());
-    }
-
-    SmartDashboard.putBoolean("Toggle", toggle.getToggle());
+    new JoystickButton(controller, 7)
+    .whileTrue(
+      new InstantCommand(armControl::resetEncoder)
+    );
     
-    if(toggle.getToggle()) {
-      // !CONE!
+    
+    // ----------------------------------- ARM CONTROL -----------------------------------
+    //Low Goal
+    new JoystickButton(controller, 5)
+    .whileTrue(
+      new ClawCMD(claw, -0.3)
+    )
+    .onTrue(
+      new Arm(armControl, autoRotate, 100, 10)
+      .alongWith(
+        new LEDCMD(2, ledControl)
+      )
+    );
 
-      //Arm
-      //Low Goal
-      new JoystickButton(controller,5).onTrue(new Arm(armControl, false, 100, 10));
+    //High Goal
+    new JoystickButton(controller,6)
+    .onTrue(
+      new Arm(armControl, autoRotate, 115, 36)
+      .alongWith(
+        new LEDCMD(2, ledControl)
+      )
+    );
 
-      //High Goal
-      new JoystickButton(controller,6).onTrue(new Arm(armControl, false, 115, 36));
+    //Store
+    new JoystickButton(controller,1)
+    .onTrue(
+      new Arm(armControl, autoRotate, 50, 0)
+      .alongWith(
+        new LEDCMD(0, ledControl)
+      )
+    );
 
-      //Store
-      new JoystickButton(controller,1).onTrue(new Arm(armControl, false, 50, 0));
-
-      //new JoystickButton(controller, 2).onTrue(new Arm(armControl, false, 270, 0));
-
-      //Claw and Intake Pose
-      new JoystickButton(controller, 3).whileTrue(new ClawCMD(claw, -0.3).alongWith(new Arm(armControl, false, 60, 15)));
-
-    } else {
-      // !CUBE!
-
-      //Arm
-      //Low Goal
-      new JoystickButton(controller,5).whileTrue(new ClawCMD(claw, -0.3).alongWith(new Arm(armControl, false, 100, 10)));
-
-      //High Goal
-      new JoystickButton(controller,6).onTrue(new Arm(armControl, false, 115, 36));
-
-      //Store
-      new JoystickButton(controller,1).onTrue(new Arm(armControl, false, 50, 0));
-
-      //new JoystickButton(controller, 2).onTrue(new Arm(armControl, false, 270, 0));
-
-      //Claw and Intake Pose
-      new JoystickButton(controller, 3).whileTrue(new ClawCMD(claw, -0.3).alongWith(new Arm(armControl, false, 50, 15)));
-    }
+    //Claw and Intake Pose
+    new JoystickButton(controller, 3)
+    .whileTrue(new ClawCMD(claw, -0.3))
+    .onTrue(
+      new Arm(armControl, autoRotate, 60, 15)
+      .alongWith(
+        new LEDCMD(2, ledControl)
+      )
+    );
 
     //Claw Out
-    new JoystickButton(controller, 4).whileTrue(new ClawCMD(claw, 0.3));
+    new JoystickButton(controller, 4)
+    .whileTrue(
+      new ClawCMD(claw, 0.3)
+    );
 
   }
 
