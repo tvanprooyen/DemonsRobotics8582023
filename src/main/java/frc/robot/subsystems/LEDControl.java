@@ -4,7 +4,6 @@ import edu.wpi.first.wpilibj.AddressableLED;
 import edu.wpi.first.wpilibj.AddressableLEDBuffer;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.MatchType;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Util.MatchData;
 
@@ -156,7 +155,7 @@ public class LEDControl extends SubsystemBase {
     }
 
     private void Yellow(){
-        allColor(255, 253, 153);
+        allColor(255, 255, 0);
     }
 
     private void Blue(){

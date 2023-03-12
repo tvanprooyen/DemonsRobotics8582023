@@ -13,17 +13,20 @@ public class DriveCommand extends CommandBase {
     private final DoubleSupplier translationXSupplier;
     private final DoubleSupplier translationYSupplier;
     private final DoubleSupplier rotationSupplier;
+    private final DoubleSupplier povSupplier;
 
     public DriveCommand(
             DrivetrainSubsystem drivetrain,
             DoubleSupplier translationXSupplier,
             DoubleSupplier translationYSupplier,
-            DoubleSupplier rotationSupplier
+            DoubleSupplier rotationSupplier,
+            DoubleSupplier povSupplier
     ) {
         this.drivetrain = drivetrain;
         this.translationXSupplier = translationXSupplier;
         this.translationYSupplier = translationYSupplier;
         this.rotationSupplier = rotationSupplier;
+        this.povSupplier = povSupplier;
 
         addRequirements(drivetrain);
     }
@@ -33,6 +36,26 @@ public class DriveCommand extends CommandBase {
         double translationXPercent = translationXSupplier.getAsDouble();
         double translationYPercent = translationYSupplier.getAsDouble();
         double rotationPercent = rotationSupplier.getAsDouble();
+        int povPos = (int)povSupplier.getAsDouble();
+
+        if(rotationPercent < 0.05 && rotationPercent > -0.05) {
+            if(povPos != -1) {
+                drivetrain.setPIDRotateValue(360 - povPos);
+                drivetrain.setRotateLock(true);
+            }
+        } else {
+            drivetrain.setRotateLock(false);
+        }
+
+        if(drivetrain.getRotateLock()) {
+            rotationPercent = -drivetrain.rotatePIDCalculation();
+
+            if(rotationPercent > 0.2) {
+                rotationPercent = 0.2;
+            } else if(rotationPercent < -0.2) {
+                rotationPercent = -0.2;
+            }
+        }
 
         drivetrain.drive(
                 ChassisSpeeds.fromFieldRelativeSpeeds(

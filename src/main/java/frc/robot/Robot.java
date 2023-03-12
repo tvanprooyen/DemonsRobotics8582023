@@ -5,6 +5,8 @@
 package frc.robot;
 
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Util.MatchData;
 import frc.robot.subsystems.LEDControl;
@@ -18,8 +20,13 @@ import frc.robot.subsystems.LEDControl;
 public class Robot extends TimedRobot {
 
   private RobotContainer m_robotContainer;
-  public MatchData mData;
+  public MatchData mData = new MatchData();
   public LEDControl ledControl;
+
+  private static final String kAllison = "Allison";
+  private static final String kGabe = "Gabe";
+  private String m_driverselected;
+  private final SendableChooser<String> m_driver = new SendableChooser<>();
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -29,7 +36,17 @@ public class Robot extends TimedRobot {
   public void robotInit() {
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
-    m_robotContainer = new RobotContainer();
+    m_driver.setDefaultOption("Gabe", kGabe);
+    m_driver.addOption("Allison", kAllison);
+    SmartDashboard.putData("Auto choices", m_driver);
+
+    switch (m_driver.getSelected()) {
+      case kGabe: m_driverselected = "Gabe"; break;
+      case kAllison: m_driverselected = "Allison"; break;
+      default: m_driverselected = "Gabe";
+    }
+
+    m_robotContainer = new RobotContainer(m_driverselected);
     ledControl = m_robotContainer.getLedControl();
     mData = ledControl.getMatchData();
     mData.setGetGameMode(0);

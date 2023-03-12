@@ -44,7 +44,7 @@ public class ArmControl extends SubsystemBase {
         extPID = new PIDController(0.3, 0, 0);
 
         //Arm Rotation Default
-        this.ArmRotationSet = 90;
+        this.ArmRotationSet = 165;
 
         this.ExtentionSpeed = 0;
 
@@ -388,7 +388,8 @@ public class ArmControl extends SubsystemBase {
     @Override
     public void periodic() {
 
-        runArmRotation(0.2);
+        
+        runArmRotation(0.3);
         runArmExtention();
 
         if(!isMotionProfilerunning() && !isArmExtented()) {

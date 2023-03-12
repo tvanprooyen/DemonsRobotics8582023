@@ -28,8 +28,11 @@ import frc.robot.Constants.AutoConstants;
 //import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.OIConstants;
 import frc.robot.Constants.SDSConstants;
+import frc.robot.Util.MatchData;
 import frc.robot.Util.ToggleSys;
+import frc.robot.Util.MatchData.Actions;
 import frc.robot.commands.Arm;
+import frc.robot.commands.ArmResetCommand;
 import frc.robot.commands.DriveCommand;
 import frc.robot.commands.LEDCMD;
 import frc.robot.commands.ClawCMD;
@@ -52,23 +55,34 @@ public class RobotContainer {
   private final LEDControl ledControl = new LEDControl();
   private final ClawSubsystem claw = new ClawSubsystem();
 
+  private final MatchData mData = ledControl.getMatchData();
+
   private final ToggleSys toggle = new ToggleSys();
 
 
-  private final SlewRateLimiter xLimiter = new SlewRateLimiter(15);
-  private final SlewRateLimiter yLimiter = new SlewRateLimiter(15);
-  private final SlewRateLimiter rotLimiter = new SlewRateLimiter(15);
+  private final SlewRateLimiter xLimiter = new SlewRateLimiter(mData.getProfileSlewRate());
+  private final SlewRateLimiter yLimiter = new SlewRateLimiter(mData.getProfileSlewRate());
+  private final SlewRateLimiter rotLimiter = new SlewRateLimiter(mData.getProfileSlewRate());
 
   private final XboxController controller = new XboxController(OIConstants.kDriverControllerPort);
 
-  public RobotContainer() {
+  public RobotContainer(String driver) {
+    /* ------------------------------------ IMPORTANT ------------------------------------
+     * Change or Add Driver Buttons Thru MatchData.java
+     * Each Driver has their own profile
+     * Robot code needs to reboot inorder for changes to be in effect
+     */
+
+     mData.setDriverSelect(driver);
+    
     drivetrain.register();
 
     drivetrain.setDefaultCommand(new DriveCommand(
             drivetrain,
             () -> xLimiter.calculate(modifyAxis(controller.getLeftY())), // Axes are flipped here on purpose
             () -> yLimiter.calculate(modifyAxis(controller.getLeftX())),
-            () -> rotLimiter.calculate(modifyAxis(controller.getRightX()))
+            () -> rotLimiter.calculate(modifyAxis((-controller.getLeftTriggerAxis() + controller.getRightTriggerAxis()) + controller.getRightX())), //controller.getRightX()
+            () -> controller.getPOV()
     ));
 
       configureButtonBindings();
@@ -94,6 +108,19 @@ public class RobotContainer {
       Store Arm = 1/A
     */
 
+
+    /*
+      Allison
+      Reset Buttons
+      Drive Gyro = 8/Start
+      Reset Arm Encoder = 7/Back
+      Low Link = 1/A
+      Mid Link/Single Station = 2/B
+      Top Link = 4/Y
+      Release Game Object = 6/Right Bumper
+      Store Arm = 5/Left Bumper
+    */
+
     // ----------------------------------- RESETS -----------------------------------
     new JoystickButton(controller,8)
     .whileTrue(
@@ -102,13 +129,19 @@ public class RobotContainer {
 
     new JoystickButton(controller, 7)
     .whileTrue(
-      new InstantCommand(armControl::resetEncoder)
+      new ArmResetCommand(armControl)
+      //new InstantCommand(armControl::resetEncoder)
+    );
+
+    new JoystickButton(controller, 2 /* mData.getProfileButton(Actions.MODE) */)
+    .onTrue(
+      new LEDCMD(1, ledControl)
     );
     
     
     // ----------------------------------- ARM CONTROL -----------------------------------
-    //Low Goal
-    new JoystickButton(controller, 5)
+    //Mid Goal
+    new JoystickButton(controller, mData.getProfileButton(Actions.MIDGOAL))
     .whileTrue(
       new ClawCMD(claw, -0.3)
     )
@@ -120,7 +153,7 @@ public class RobotContainer {
     );
 
     //High Goal
-    new JoystickButton(controller,6)
+    new JoystickButton(controller,mData.getProfileButton(Actions.HIGHGOAL))
     .onTrue(
       new Arm(armControl, autoRotate, 115, 36)
       .alongWith(
@@ -129,26 +162,28 @@ public class RobotContainer {
     );
 
     //Store
-    new JoystickButton(controller,1)
+    new JoystickButton(controller,mData.getProfileButton(Actions.STORE))
     .onTrue(
-      new Arm(armControl, autoRotate, 50, 0)
+      new Arm(armControl, autoRotate, 165, 0)
       .alongWith(
         new LEDCMD(0, ledControl)
       )
     );
 
     //Claw and Intake Pose
-    new JoystickButton(controller, 3)
-    .whileTrue(new ClawCMD(claw, -0.3))
+    new JoystickButton(controller, mData.getProfileButton(Actions.LOWGOAL))
     .onTrue(
-      new Arm(armControl, autoRotate, 60, 15)
+      new Arm(armControl, autoRotate, 50, 15)
       .alongWith(
         new LEDCMD(2, ledControl)
       )
+    )
+    .whileTrue(
+      new ClawCMD(claw, -0.3)
     );
 
     //Claw Out
-    new JoystickButton(controller, 4)
+    new JoystickButton(controller, mData.getProfileButton(Actions.RELEASE))
     .whileTrue(
       new ClawCMD(claw, 0.3)
     );

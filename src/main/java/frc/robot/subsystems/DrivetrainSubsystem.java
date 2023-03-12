@@ -6,6 +6,9 @@ import com.ctre.phoenix.sensors.Pigeon2;
 import com.ctre.phoenix.sensors.Pigeon2Configuration;
 import com.swervedrivespecialties.swervelib.Mk4iSwerveModuleHelper;
 import com.swervedrivespecialties.swervelib.SwerveModule;
+
+import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -35,11 +38,17 @@ public class DrivetrainSubsystem extends SubsystemBase {
     private final SwerveModule backLeftModule;
     private final SwerveModule backRightModule;
 
+    private final PIDController RotatePID;
+
     private final SwerveDriveOdometry odometry;
 
     private final Pigeon2 gyroscope = new Pigeon2(SDSConstants.DRIVETRAIN_PIGEON_ID);
 
     private final Field2d fieldWG = new Field2d();
+
+    private boolean RotateLock;
+
+    private double RotateSet;
 
     private final ShuffleboardTab fieldSB = Shuffleboard.getTab("Field");
 
@@ -118,6 +127,14 @@ public class DrivetrainSubsystem extends SubsystemBase {
 
         //updateField2d();
         //fieldSB.add("Robot Pose", fieldWG);
+
+        RotatePID = new PIDController(0.01, 0.00, 0.00);
+        RotatePID.enableContinuousInput(-180.0f,  180.0f);
+        RotatePID.setTolerance(2);
+
+        RotateSet = 0;
+
+        this.RotateLock = false;
     }
 
     public void updateField2d() {
@@ -158,8 +175,34 @@ public class DrivetrainSubsystem extends SubsystemBase {
         this.chassisSpeeds = chassisSpeeds;
     }
 
+    public void setPIDRotateValue(double RotateSet) {
+        this.RotateSet = RotateSet;
+    }
+
+    public double getPIDRotateValue() {
+        return this.RotateSet;
+    }
+
+    public boolean getRotateLock(){
+        return this.RotateLock;
+    }
+
+    public double rotatePIDCalculation() {
+        double futureRotatePID = MathUtil.clamp(RotatePID.calculate(getRotation().getDegrees(), RotateSet), -1, 1);
+
+        return futureRotatePID;
+    }
+
+    public void setRotateLock(boolean RotateLock) {
+        this.RotateLock = RotateLock;
+    }
+
     @Override
     public void periodic() {
+
+        rotatePIDCalculation();
+
+        dashboard();
 
         odometry.update(
         Rotation2d.fromDegrees(getGyroYaw()),
@@ -178,7 +221,10 @@ public class DrivetrainSubsystem extends SubsystemBase {
         backRightModule.set(states[3].speedMetersPerSecond / MAX_VELOCITY_METERS_PER_SECOND * MAX_VOLTAGE, states[3].angle.getRadians());
     }
 
-
+    private void dashboard() {
+        SmartDashboard.putNumber("Rotate Set Point", getPIDRotateValue());
+        SmartDashboard.putNumber("Rotate PID Calc", rotatePIDCalculation());
+    }
    
     public <Supplier>Pose2d getPos() {
         return odometry.getPoseMeters();
