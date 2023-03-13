@@ -1,18 +1,23 @@
 package frc.robot.commands;
 
 import edu.wpi.first.wpilibj2.command.CommandBase;
+import frc.robot.Util.ToggleSys;
 import frc.robot.subsystems.ArmControl;
 
 //arm stuff
 public class Arm extends CommandBase{
 
     private ArmControl armControl;
-    private double ArmRotationSet, ExtentionSet, ExtentionSpeed;
+    private double ArmRotationSetCube, ExtentionSetCube, ExtentionSpeed;
+    private double ArmRotationSetCone, ExtentionSetCone;
+    private double ArmRotationSet, ExtentionSet;
     private boolean AutoRotate;
 
     private boolean disableRotation;
 
     private boolean isFinished;
+
+    private ToggleSys toggleSys;
 
     /**
    * Sets the Arm Control Profile
@@ -22,10 +27,24 @@ public class Arm extends CommandBase{
    * @param ArmRotationSet is the setpoint in deg (0-360) for the arm to go
    * @param ExtentionSet is the setpoint in inches for the extention to reach for. -1 stay at last setpoint.
    */
-    public Arm (ArmControl armRotationControl, boolean AutoRotate, double ArmRotationSet, double ExtentionSet){
+    public Arm (ArmControl armRotationControl, boolean AutoRotate, double ArmRotationSetCube, double ExtentionSetCube){
         this.armControl = armRotationControl;
-        this.ArmRotationSet = ArmRotationSet;
-        this.ExtentionSet = ExtentionSet;
+        this.ArmRotationSetCube = ArmRotationSetCube;
+        this.ExtentionSetCube = ExtentionSetCube;
+        this.AutoRotate = AutoRotate;
+        this.ExtentionSpeed = -2;
+        disableRotation = false;
+        this.isFinished = false;
+        addRequirements(armRotationControl);
+    }
+
+    public Arm (ArmControl armRotationControl, boolean AutoRotate, double ArmRotationSetCube, double ExtentionSetCube, double ArmRotationSetCone, double ExtentionSetCone, ToggleSys toggleSys){
+        this.armControl = armRotationControl;
+        this.ArmRotationSetCube = ArmRotationSetCube;
+        this.ExtentionSetCube = ExtentionSetCube;
+        this.ArmRotationSetCone = ArmRotationSetCone;
+        this.ExtentionSetCone = ExtentionSetCone;
+        this.toggleSys = toggleSys;
         this.AutoRotate = AutoRotate;
         this.ExtentionSpeed = -2;
         disableRotation = false;
@@ -35,8 +54,8 @@ public class Arm extends CommandBase{
 
     public Arm (ArmControl armRotationControl, double ExtentionSpeed){
         this.armControl = armRotationControl;
-        this.ArmRotationSet = armRotationControl.getArmRotation();
-        this.ExtentionSet = -1;
+        this.ArmRotationSetCube = armRotationControl.getArmRotation();
+        this.ExtentionSetCube = -1;
         this.AutoRotate = false;
         this.ExtentionSpeed = ExtentionSpeed;
         disableRotation = true;
@@ -54,6 +73,20 @@ public class Arm extends CommandBase{
         if(ExtentionSet == -1) {
             armControl.setArmExtention(armControl.getExtentionPosition());
         }
+
+        if(toggleSys != null) {
+            if(toggleSys.getToggle()) {
+                this.ArmRotationSet = this.ArmRotationSetCube;
+                this.ExtentionSet = this.ExtentionSetCube;
+            } else {
+                this.ArmRotationSet = this.ArmRotationSetCone;
+                this.ExtentionSet = this.ExtentionSetCone;
+            }
+        } else {
+            this.ArmRotationSet = this.ArmRotationSetCube;
+            this.ExtentionSet = this.ExtentionSetCube;
+        }
+        
     }
 
     @Override

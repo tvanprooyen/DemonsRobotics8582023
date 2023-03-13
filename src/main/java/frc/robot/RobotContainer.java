@@ -35,6 +35,7 @@ import frc.robot.commands.Arm;
 import frc.robot.commands.ArmResetCommand;
 import frc.robot.commands.DriveCommand;
 import frc.robot.commands.LEDCMD;
+import frc.robot.commands.ToggleConeCubeCommand;
 import frc.robot.commands.ClawCMD;
 import frc.robot.subsystems.ArmControl;
 import frc.robot.subsystems.ClawSubsystem;
@@ -135,7 +136,8 @@ public class RobotContainer {
 
     new JoystickButton(controller, 2 /* mData.getProfileButton(Actions.MODE) */)
     .onTrue(
-      new LEDCMD(1, ledControl)
+      new ToggleConeCubeCommand(toggle)
+      //new LEDCMD(1, ledControl)
     );
     
     
@@ -146,25 +148,34 @@ public class RobotContainer {
       new ClawCMD(claw, -0.3)
     )
     .onTrue(
-      new Arm(armControl, autoRotate, 100, 10)
+      new Arm(armControl, autoRotate, 
+      100, 10,
+      100, 10,
+      toggle)
       .alongWith(
-        new LEDCMD(2, ledControl)
+        new LEDCMD(toggle, ledControl)
       )
     );
 
     //High Goal
     new JoystickButton(controller,mData.getProfileButton(Actions.HIGHGOAL))
     .onTrue(
-      new Arm(armControl, autoRotate, 115, 36)
+      new Arm(armControl, autoRotate, 
+      115, 36,
+      115, 36,
+      toggle)
       .alongWith(
-        new LEDCMD(2, ledControl)
+        new LEDCMD(toggle, ledControl)
       )
     );
 
     //Store
     new JoystickButton(controller,mData.getProfileButton(Actions.STORE))
     .onTrue(
-      new Arm(armControl, autoRotate, 165, 0)
+      new Arm(armControl, autoRotate, 
+      165, 0,
+      165, 0,
+      toggle)
       .alongWith(
         new LEDCMD(0, ledControl)
       )
@@ -173,9 +184,12 @@ public class RobotContainer {
     //Claw and Intake Pose
     new JoystickButton(controller, mData.getProfileButton(Actions.LOWGOAL))
     .onTrue(
-      new Arm(armControl, autoRotate, 50, 15)
+      new Arm(armControl, autoRotate, 
+      50, 15,
+      50, 15,
+      toggle)
       .alongWith(
-        new LEDCMD(2, ledControl)
+        new LEDCMD(toggle, ledControl)
       )
     )
     .whileTrue(

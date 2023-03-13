@@ -1,26 +1,25 @@
 package frc.robot.commands;
 
-import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.subsystems.DrivetrainSubsystem;
 
-import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
+import java.util.function.IntSupplier;
 
 public class DriveCommand extends CommandBase {
     private final DrivetrainSubsystem drivetrain;
     private final DoubleSupplier translationXSupplier;
     private final DoubleSupplier translationYSupplier;
     private final DoubleSupplier rotationSupplier;
-    private final DoubleSupplier povSupplier;
+    private final IntSupplier povSupplier;
 
     public DriveCommand(
             DrivetrainSubsystem drivetrain,
             DoubleSupplier translationXSupplier,
             DoubleSupplier translationYSupplier,
             DoubleSupplier rotationSupplier,
-            DoubleSupplier povSupplier
+            IntSupplier povSupplier
     ) {
         this.drivetrain = drivetrain;
         this.translationXSupplier = translationXSupplier;
@@ -36,10 +35,12 @@ public class DriveCommand extends CommandBase {
         double translationXPercent = translationXSupplier.getAsDouble();
         double translationYPercent = translationYSupplier.getAsDouble();
         double rotationPercent = rotationSupplier.getAsDouble();
-        int povPos = (int)povSupplier.getAsDouble();
+        int povPos = povSupplier.getAsInt();
 
+        //Allows the Robot to angle its self if the POV is pressed and with in the deadband of the axis
         if(rotationPercent < 0.05 && rotationPercent > -0.05) {
             if(povPos != -1) {
+                //-360 flips the axis
                 drivetrain.setPIDRotateValue(360 - povPos);
                 drivetrain.setRotateLock(true);
             }
