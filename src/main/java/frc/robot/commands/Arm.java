@@ -13,11 +13,9 @@ public class Arm extends CommandBase{
     private double ArmRotationSet, ExtentionSet;
     private boolean AutoRotate;
 
-    private boolean disableRotation;
+    private ToggleSys toggleSys;
 
     private boolean isFinished;
-
-    private ToggleSys toggleSys;
 
     /**
    * Sets the Arm Control Profile
@@ -33,8 +31,11 @@ public class Arm extends CommandBase{
         this.ExtentionSetCube = ExtentionSetCube;
         this.AutoRotate = AutoRotate;
         this.ExtentionSpeed = -2;
-        disableRotation = false;
         this.isFinished = false;
+
+        this.ArmRotationSet = this.ArmRotationSetCube;
+        this.ExtentionSet = this.ExtentionSetCube;
+
         addRequirements(armRotationControl);
     }
 
@@ -44,11 +45,24 @@ public class Arm extends CommandBase{
         this.ExtentionSetCube = ExtentionSetCube;
         this.ArmRotationSetCone = ArmRotationSetCone;
         this.ExtentionSetCone = ExtentionSetCone;
+
+        this.ArmRotationSet = this.ArmRotationSetCone;
+        this.ExtentionSet = this.ExtentionSetCone;
+
         this.toggleSys = toggleSys;
+
         this.AutoRotate = AutoRotate;
         this.ExtentionSpeed = -2;
-        disableRotation = false;
         this.isFinished = false;
+
+        /* if(toggleSys.getToggle()) {
+            this.ArmRotationSet = this.ArmRotationSetCube;
+            this.ExtentionSet = this.ExtentionSetCube;
+        } else {
+            this.ArmRotationSet = this.ArmRotationSetCone;
+            this.ExtentionSet = this.ExtentionSetCone;
+        } */
+
         addRequirements(armRotationControl);
     }
 
@@ -58,8 +72,11 @@ public class Arm extends CommandBase{
         this.ExtentionSetCube = -1;
         this.AutoRotate = false;
         this.ExtentionSpeed = ExtentionSpeed;
-        disableRotation = true;
         this.isFinished = false;
+
+        this.ArmRotationSet = this.ArmRotationSetCube;
+        this.ExtentionSet = this.ExtentionSetCube;
+
         addRequirements(armRotationControl);
     }
 
@@ -74,6 +91,13 @@ public class Arm extends CommandBase{
             armControl.setArmExtention(armControl.getExtentionPosition());
         }
 
+        armControl.setAutoArmRotate(this.AutoRotate);
+        
+    }
+
+    @Override
+    public void execute(){
+
         if(toggleSys != null) {
             if(toggleSys.getToggle()) {
                 this.ArmRotationSet = this.ArmRotationSetCube;
@@ -82,15 +106,8 @@ public class Arm extends CommandBase{
                 this.ArmRotationSet = this.ArmRotationSetCone;
                 this.ExtentionSet = this.ExtentionSetCone;
             }
-        } else {
-            this.ArmRotationSet = this.ArmRotationSetCube;
-            this.ExtentionSet = this.ExtentionSetCube;
         }
         
-    }
-
-    @Override
-    public void execute(){
 
         if(ExtentionSpeed == -2) {
             this.isFinished = armControl.setArmMotionProfile(ArmRotationSet, ExtentionSet, false);
@@ -119,6 +136,6 @@ public class Arm extends CommandBase{
 
     @Override
     public boolean isFinished(){
-        return this.isFinished;
+        return true /* this.isFinished */;
     }
 }

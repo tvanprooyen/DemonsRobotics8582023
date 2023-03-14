@@ -3,7 +3,9 @@ package frc.robot.commands;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.subsystems.DrivetrainSubsystem;
+import frc.robot.subsystems.Limelight;
 
+import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 import java.util.function.IntSupplier;
 
@@ -13,19 +15,25 @@ public class DriveCommand extends CommandBase {
     private final DoubleSupplier translationYSupplier;
     private final DoubleSupplier rotationSupplier;
     private final IntSupplier povSupplier;
+    private final BooleanSupplier AlignWithLimeLight;
+    private final Limelight limelight;
 
     public DriveCommand(
             DrivetrainSubsystem drivetrain,
+            Limelight limelight,
             DoubleSupplier translationXSupplier,
             DoubleSupplier translationYSupplier,
             DoubleSupplier rotationSupplier,
-            IntSupplier povSupplier
+            IntSupplier povSupplier,
+            BooleanSupplier AlignWithLimeLight
     ) {
         this.drivetrain = drivetrain;
+        this.limelight = limelight;
         this.translationXSupplier = translationXSupplier;
         this.translationYSupplier = translationYSupplier;
         this.rotationSupplier = rotationSupplier;
         this.povSupplier = povSupplier;
+        this.AlignWithLimeLight = AlignWithLimeLight;
 
         addRequirements(drivetrain);
     }
@@ -35,6 +43,7 @@ public class DriveCommand extends CommandBase {
         double translationXPercent = translationXSupplier.getAsDouble();
         double translationYPercent = translationYSupplier.getAsDouble();
         double rotationPercent = rotationSupplier.getAsDouble();
+        boolean startLimeLightAlign = AlignWithLimeLight.getAsBoolean();
         int povPos = povSupplier.getAsInt();
 
         //Allows the Robot to angle its self if the POV is pressed and with in the deadband of the axis
@@ -56,6 +65,11 @@ public class DriveCommand extends CommandBase {
             } else if(rotationPercent < -0.2) {
                 rotationPercent = -0.2;
             }
+        }
+
+        //LimeLight
+        if(startLimeLightAlign) {
+            translationYPercent += limelight.PIDControllerCalculation();
         }
 
         drivetrain.drive(

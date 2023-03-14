@@ -1,6 +1,9 @@
 package frc.robot.Util;
 
-public class ToggleSys {
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
+
+public class ToggleSys extends SubsystemBase {
 
     private boolean toggle;
 
@@ -14,6 +17,11 @@ public class ToggleSys {
 
     public void setToggle(boolean toggle) {
         this.toggle = toggle;
+        SmartDashboard.putBoolean("Toggle Sys", this.toggle);
+    }
+
+    public void notToggle() {
+        setToggle(!getToggle());
     }
     
 }

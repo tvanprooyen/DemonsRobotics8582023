@@ -42,7 +42,7 @@ public class DrivetrainSubsystem extends SubsystemBase {
 
     private final SwerveDriveOdometry odometry;
 
-    private final Pigeon2 gyroscope = new Pigeon2(SDSConstants.DRIVETRAIN_PIGEON_ID);
+    public final Pigeon2 gyroscope = new Pigeon2(SDSConstants.DRIVETRAIN_PIGEON_ID);
 
     private final Field2d fieldWG = new Field2d();
 
@@ -152,6 +152,10 @@ public class DrivetrainSubsystem extends SubsystemBase {
             }, 
             new Pose2d(odometry.getPoseMeters().getTranslation(), Rotation2d.fromDegrees(0.0))
         );
+    }
+
+    public double getRotationInDeg() {
+        return getRotation().getDegrees();
     }
 
     public Pose2d robotPose() {

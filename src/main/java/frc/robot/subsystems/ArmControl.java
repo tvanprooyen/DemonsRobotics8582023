@@ -36,7 +36,14 @@ public class ArmControl extends SubsystemBase {
 
     private boolean stopControl;
 
-    public ArmControl(){
+    private boolean AutoArmRotate;
+
+    private DrivetrainSubsystem DriveTrain;
+
+    public ArmControl(DrivetrainSubsystem DriveTrain){
+
+        this.DriveTrain = DriveTrain;
+
         /* rotPID = new PIDController(0.015, 0.005, 0.00);
         extPID = new PIDController(0.1, 0, 0); */
 
@@ -45,6 +52,8 @@ public class ArmControl extends SubsystemBase {
 
         //Arm Rotation Default
         this.ArmRotationSet = 165;
+
+        this.AutoArmRotate = true;
 
         this.ExtentionSpeed = 0;
 
@@ -139,13 +148,37 @@ public class ArmControl extends SubsystemBase {
     }
 
     /**
+     * gets the auto rotate value
+     */
+    public boolean getAutoArmRotate() {
+        return this.AutoArmRotate;
+    }
+
+    /**
+     * Allows arm to auto rotate
+     * @param AutoArmRotate true means auto rotate is active
+     */
+    public void setAutoArmRotate(boolean AutoArmRotate) {
+        this.AutoArmRotate = AutoArmRotate;
+    }
+
+    /**
      * Runs the Arm Rotation sequence
      * @param speedLimiter Maximum speed. Keeps the PID from going to fast to reach setpoint
      */
     public void runArmRotation(double speedLimiter) {
         double ArmRotationFuturePosition = 0;
 
-            ArmRotationFuturePosition = rotPID.calculate(getRotationPosition(), getArmRotation());
+        double futureRotationSet = getArmRotation();
+
+            if(!(DriveTrain.getRotationInDeg() < 90 && DriveTrain.getRotationInDeg() > -90) && getAutoArmRotate()){
+
+                Double delta = 180 - getArmRotation();
+
+                futureRotationSet = 180 + delta;
+            }
+
+            ArmRotationFuturePosition = rotPID.calculate(getRotationPosition(), futureRotationSet);
 
             setArmRotationError(ArmRotationFuturePosition);
 
@@ -387,7 +420,6 @@ public class ArmControl extends SubsystemBase {
 
     @Override
     public void periodic() {
-
         
         runArmRotation(0.3);
         runArmExtention();
@@ -439,6 +471,8 @@ public class ArmControl extends SubsystemBase {
         SmartDashboard.putBoolean("Arm In Posistion", isArmInPosistion());
 
         SmartDashboard.putBoolean("In Arm Posistion Tol", getExtentionPosition() < -(getArmExtention() - 1));
+
+        SmartDashboard.putBoolean("Switch Forward", true);
         
     }
 }

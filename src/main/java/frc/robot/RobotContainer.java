@@ -5,6 +5,7 @@
 package frc.robot;
 
 import java.util.List;
+import java.util.function.BooleanSupplier;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
@@ -35,13 +36,14 @@ import frc.robot.commands.Arm;
 import frc.robot.commands.ArmResetCommand;
 import frc.robot.commands.DriveCommand;
 import frc.robot.commands.LEDCMD;
-import frc.robot.commands.ToggleConeCubeCommand;
+import frc.robot.commands.LimeLightCommand;
 import frc.robot.commands.ClawCMD;
 import frc.robot.subsystems.ArmControl;
 import frc.robot.subsystems.ClawSubsystem;
 import frc.robot.subsystems.DrivetrainSubsystem;
 //import frc.robot.subsystems.SwerveDrive;
 import frc.robot.subsystems.LEDControl;
+import frc.robot.subsystems.Limelight;
 
 
 /**
@@ -51,8 +53,9 @@ import frc.robot.subsystems.LEDControl;
  * subsystems, commands, and button mappings) should be declared here.
  */
 public class RobotContainer {
+  private final Limelight limelight = new Limelight();
   private final DrivetrainSubsystem drivetrain = new DrivetrainSubsystem();
-  private final ArmControl armControl = new ArmControl();
+  private final ArmControl armControl = new ArmControl(drivetrain);
   private final LEDControl ledControl = new LEDControl();
   private final ClawSubsystem claw = new ClawSubsystem();
 
@@ -60,6 +63,7 @@ public class RobotContainer {
 
   private final ToggleSys toggle = new ToggleSys();
 
+  
 
   private final SlewRateLimiter xLimiter = new SlewRateLimiter(mData.getProfileSlewRate());
   private final SlewRateLimiter yLimiter = new SlewRateLimiter(mData.getProfileSlewRate());
@@ -80,10 +84,12 @@ public class RobotContainer {
 
     drivetrain.setDefaultCommand(new DriveCommand(
             drivetrain,
+            limelight,
             () -> xLimiter.calculate(modifyAxis(controller.getLeftY())), // Axes are flipped here on purpose
             () -> yLimiter.calculate(modifyAxis(controller.getLeftX())),
             () -> rotLimiter.calculate(modifyAxis((-controller.getLeftTriggerAxis() + controller.getRightTriggerAxis()) + controller.getRightX())), //controller.getRightX()
-            () -> controller.getPOV()
+            () -> controller.getPOV(),
+            () -> controller.getRightStickButton()
     ));
 
       configureButtonBindings();
@@ -96,7 +102,7 @@ public class RobotContainer {
 
   private void configureButtonBindings() {
 
-    boolean autoRotate = false;
+    boolean autoRotate = true;
 
     /*
       Reset Buttons
@@ -135,9 +141,9 @@ public class RobotContainer {
     );
 
     new JoystickButton(controller, 2 /* mData.getProfileButton(Actions.MODE) */)
+    //.debounce(0.15)
     .onTrue(
-      new ToggleConeCubeCommand(toggle)
-      //new LEDCMD(1, ledControl)
+      new InstantCommand(toggle::notToggle)
     );
     
     
@@ -154,6 +160,8 @@ public class RobotContainer {
       toggle)
       .alongWith(
         new LEDCMD(toggle, ledControl)
+      ).alongWith(
+        new LimeLightCommand(limelight, toggle)
       )
     );
 
@@ -166,6 +174,8 @@ public class RobotContainer {
       toggle)
       .alongWith(
         new LEDCMD(toggle, ledControl)
+      ).alongWith(
+        new LimeLightCommand(limelight, toggle)
       )
     );
 
@@ -178,18 +188,22 @@ public class RobotContainer {
       toggle)
       .alongWith(
         new LEDCMD(0, ledControl)
+      ).alongWith(
+        new LimeLightCommand(limelight, 3)
       )
     );
 
     //Claw and Intake Pose
     new JoystickButton(controller, mData.getProfileButton(Actions.LOWGOAL))
     .onTrue(
-      new Arm(armControl, autoRotate, 
+      new Arm(armControl, false, 
       50, 15,
-      50, 15,
+      70, 2,
       toggle)
       .alongWith(
         new LEDCMD(toggle, ledControl)
+      ).alongWith(
+        new LimeLightCommand(limelight, 3)
       )
     )
     .whileTrue(
