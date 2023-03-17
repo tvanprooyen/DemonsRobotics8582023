@@ -38,6 +38,8 @@ public class ArmControl extends SubsystemBase {
 
     private boolean AutoArmRotate;
 
+    private boolean shouldBuffer;
+
     private DrivetrainSubsystem DriveTrain;
 
     public ArmControl(DrivetrainSubsystem DriveTrain){
@@ -51,7 +53,7 @@ public class ArmControl extends SubsystemBase {
         extPID = new PIDController(0.3, 0, 0);
 
         //Arm Rotation Default
-        this.ArmRotationSet = 165;
+        this.ArmRotationSet = 160;
 
         this.AutoArmRotate = true;
 
@@ -72,6 +74,8 @@ public class ArmControl extends SubsystemBase {
 
         this.ArmRotationError = 0;
         this.ArmExtentionError = 0;
+
+        this.shouldBuffer = true;
 
         extMotor.setIdleMode(IdleMode.kBrake);
 
@@ -140,6 +144,23 @@ public class ArmControl extends SubsystemBase {
         return (getArmRotationError() < -rotationTol) && (getArmRotationError() > rotationTol);
     }
 
+    public boolean isArmRotationInPosistion() {
+        //Acceptable Range to say its finished, There will always be an error in PID. Never fully reaches 0;
+        double rotationTol = 4; //TODO CHANGE THIS WHEN TESTING
+
+        double armRotationSet = getArmRotation();
+
+        if((DriveTrain.getRotationInDeg() < 45 && DriveTrain.getRotationInDeg() > -45) && getAutoArmRotate()){
+
+            Double delta = 180 - getArmRotation();
+
+            armRotationSet = 180 + delta;
+        }
+
+
+        return (getRotationPosition() > (armRotationSet - rotationTol)) && (getRotationPosition() < (armRotationSet + rotationTol));
+    }
+
     /**
      * Runs the Arm Rotation sequence
      */
@@ -171,7 +192,7 @@ public class ArmControl extends SubsystemBase {
 
         double futureRotationSet = getArmRotation();
 
-            if(!(DriveTrain.getRotationInDeg() < 90 && DriveTrain.getRotationInDeg() > -90) && getAutoArmRotate()){
+            if((DriveTrain.getRotationInDeg() < 45 && DriveTrain.getRotationInDeg() > -45) && getAutoArmRotate()){
 
                 Double delta = 180 - getArmRotation();
 
@@ -361,46 +382,62 @@ public class ArmControl extends SubsystemBase {
 
     //----------------------------Other----------------------------//
 
+    public void doBuffer(boolean shouldBuffer) {
+        this.shouldBuffer = shouldBuffer;
+    }
+
+    public boolean shouldBuffer() {
+        return this.shouldBuffer;
+    }
+
     public boolean setArmMotionProfile(double ArmRotationSet, double ExtentionSet, boolean interrupt) {
 
-        if((ArmRotationSet != getArmRotation() && isArmExtented())) {
-            setArmRotationBuffer(ArmRotationSet);
-            setArmExtentionBuffer(ExtentionSet);
-            setArmExtention(0.5);
-            return true;
-        } else {
-            if(!isArmExtentionRunning()) {
-                if(getArmRotationBuffer() != -1) {
-                    setArmRotation(getArmRotationBuffer());
-                    setArmRotationBuffer(-1);
-                } else {
-                    if(getArmRotation() != ArmRotationSet) {
-                        setArmRotation(ArmRotationSet);
-                        setArmRotationBuffer(-1);
-                    }
-                } 
-            }
-        }
-
-        if(isArmExtentionRunning()) {
-            if(getArmExtentionBuffer() == -1) {
+        if(shouldBuffer()) {
+            if((ArmRotationSet != getArmRotation() && isArmExtented())) {
+                setArmRotationBuffer(ArmRotationSet);
                 setArmExtentionBuffer(ExtentionSet);
-            }
-            
-        } else {
-            if(!isArmRotationRunning()) {
-                if(getArmExtentionBuffer() != -1) {
-                    setArmExtention(getArmExtentionBuffer());
-                    setArmExtentionBuffer(-1);
-                } else {
-                    if(getArmExtention() != ExtentionSet) {
-                        setArmExtention(ExtentionSet);
-                        setArmExtentionBuffer(-1);
-                    }
+                setArmExtention(0.5);
+                return true;
+            } else {
+                if(!isArmExtentionRunning()) {
+                    if(getArmRotationBuffer() != -1) {
+                        setArmRotation(getArmRotationBuffer());
+                        setArmRotationBuffer(-1);
+                    } else {
+                        if(getArmRotation() != ArmRotationSet) {
+                            setArmRotation(ArmRotationSet);
+                            setArmRotationBuffer(-1);
+                        }
+                    } 
                 }
             }
-            
+
+            if(isArmExtentionRunning()) {
+                if(getArmExtentionBuffer() == -1) {
+                    setArmExtentionBuffer(ExtentionSet);
+                }
+                
+            } else {
+                if(!isArmRotationRunning()) {
+                    if(getArmExtentionBuffer() != -1) {
+                        setArmExtention(getArmExtentionBuffer());
+                        setArmExtentionBuffer(-1);
+                    } else {
+                        if(getArmExtention() != ExtentionSet) {
+                            setArmExtention(ExtentionSet);
+                            setArmExtentionBuffer(-1);
+                        }
+                    }
+                }
+                
+            }
+        } else {
+            setArmExtention(ExtentionSet);
+            setArmRotation(ArmRotationSet);
+            setArmExtentionBuffer(-1);
+            setArmRotationBuffer(-1);
         }
+        
 
         return true;
         
@@ -424,7 +461,7 @@ public class ArmControl extends SubsystemBase {
         runArmRotation(0.3);
         runArmExtention();
 
-        if(!isMotionProfilerunning() && !isArmExtented()) {
+        if(shouldBuffer() && (!isMotionProfilerunning() && !isArmExtented())) {
             if(getArmRotationBuffer() != -1) {
                 setArmRotation(getArmRotationBuffer());
                 setArmRotationBuffer(-1);
@@ -473,6 +510,8 @@ public class ArmControl extends SubsystemBase {
         SmartDashboard.putBoolean("In Arm Posistion Tol", getExtentionPosition() < -(getArmExtention() - 1));
 
         SmartDashboard.putBoolean("Switch Forward", true);
+
+        SmartDashboard.putBoolean("Arm Rotation in Pos", isArmRotationInPosistion());
         
     }
 }

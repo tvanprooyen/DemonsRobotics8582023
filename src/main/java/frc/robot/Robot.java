@@ -7,8 +7,11 @@ package frc.robot;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Util.MatchData;
+import frc.robot.commands.Arm;
+import frc.robot.subsystems.ArmControl;
 import frc.robot.subsystems.LEDControl;
 
 /**
@@ -28,6 +31,10 @@ public class Robot extends TimedRobot {
   private String m_driverselected;
   private final SendableChooser<String> m_driver = new SendableChooser<>();
 
+  private ArmControl armControl;
+
+  private String pastDriver = "";
+
   /**
    * This function is run when the robot is first started up and should be used for any
    * initialization code.
@@ -38,7 +45,7 @@ public class Robot extends TimedRobot {
     // autonomous chooser on the dashboard.
     m_driver.setDefaultOption("Gabe", kGabe);
     m_driver.addOption("Allison", kAllison);
-    SmartDashboard.putData("Auto choices", m_driver);
+    SmartDashboard.putData("Drivers", m_driver);
 
     switch (m_driver.getSelected()) {
       case kGabe: m_driverselected = "Gabe"; break;
@@ -50,6 +57,8 @@ public class Robot extends TimedRobot {
     ledControl = m_robotContainer.getLedControl();
     mData = ledControl.getMatchData();
     mData.setGetGameMode(0);
+
+    armControl = m_robotContainer.getArmControl();
   }
 
   /**
@@ -73,21 +82,39 @@ public class Robot extends TimedRobot {
 
   /** This function is called once each time the robot enters Disabled mode. */
   @Override
-  public void disabledInit() { mData.setGetGameMode(0); }
+  public void disabledInit() {
+    mData.setGetGameMode(0); 
+    //new Arm(armControl, false, 165, armControl.getExtentionPosition()).schedule();
+    
+  }
 
   @Override
-  public void disabledPeriodic() {}
+  public void disabledPeriodic() {
+    
+    /* switch (m_driver.getSelected()) {
+      case kGabe: m_driverselected = "Gabe"; break;
+      case kAllison: m_driverselected = "Allison"; break;
+      default: m_driverselected = "Gabe";
+    }
+
+    if(pastDriver != m_driverselected) {
+      m_robotContainer.configureButtonBindings(m_driverselected);
+
+      pastDriver = m_driverselected;
+    } */
+    
+
+  }
 
   /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
   @Override
   public void autonomousInit() {
     mData.setGetGameMode(1);
-   // m_autonomousCommand = m_robotContainer.getAutonomousCommand();
+    Command m_autonomousCommand = m_robotContainer.getAutonomousCommand();
 
-    // schedule the autonomous command (example)
-    //if (m_autonomousCommand != null) {
-    //  m_autonomousCommand.schedule();
-   // }
+    if (m_autonomousCommand != null) {
+      m_autonomousCommand.schedule();
+    }
   }
 
   /** This function is called periodically during autonomous. */

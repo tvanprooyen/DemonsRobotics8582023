@@ -108,5 +108,11 @@ public class SwerveModuleFactory<DriveConfiguration, SteerConfiguration> {
             driveController.setReferenceVoltage(driveVoltage);
             steerController.setReferenceAngle(steerAngle);
         }
+
+        @Override
+        public void stop() {
+            driveController.setReferenceVoltage(0);
+            steerController.setReferenceAngle(0);
+        }
     }
 }

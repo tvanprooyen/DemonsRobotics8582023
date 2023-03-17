@@ -13,6 +13,8 @@ public class Arm extends CommandBase{
     private double ArmRotationSet, ExtentionSet;
     private boolean AutoRotate;
 
+    private boolean shouldBuffer;
+
     private ToggleSys toggleSys;
 
     private boolean isFinished;
@@ -33,8 +35,31 @@ public class Arm extends CommandBase{
         this.ExtentionSpeed = -2;
         this.isFinished = false;
 
+        this.shouldBuffer = true;
+
         this.ArmRotationSet = this.ArmRotationSetCube;
         this.ExtentionSet = this.ExtentionSetCube;
+
+        addRequirements(armRotationControl);
+    }
+
+    public Arm(ArmControl armRotationControl, boolean AutoRotate, double ArmRotationSetCube, double ExtentionSetCube, double ArmRotationSetCone, double ExtentionSetCone, ToggleSys toggleSys, boolean shouldBuffer) {
+        this.armControl = armRotationControl;
+        this.ArmRotationSetCube = ArmRotationSetCube;
+        this.ExtentionSetCube = ExtentionSetCube;
+        this.ArmRotationSetCone = ArmRotationSetCone;
+        this.ExtentionSetCone = ExtentionSetCone;
+
+        this.ArmRotationSet = this.ArmRotationSetCone;
+        this.ExtentionSet = this.ExtentionSetCone;
+
+        this.toggleSys = toggleSys;
+
+        this.shouldBuffer = shouldBuffer;
+
+        this.AutoRotate = AutoRotate;
+        this.ExtentionSpeed = -2;
+        this.isFinished = false;
 
         addRequirements(armRotationControl);
     }
@@ -50,6 +75,8 @@ public class Arm extends CommandBase{
         this.ExtentionSet = this.ExtentionSetCone;
 
         this.toggleSys = toggleSys;
+
+        this.shouldBuffer = true;
 
         this.AutoRotate = AutoRotate;
         this.ExtentionSpeed = -2;
@@ -74,6 +101,8 @@ public class Arm extends CommandBase{
         this.ExtentionSpeed = ExtentionSpeed;
         this.isFinished = false;
 
+        this.shouldBuffer = true;
+
         this.ArmRotationSet = this.ArmRotationSetCube;
         this.ExtentionSet = this.ExtentionSetCube;
 
@@ -82,13 +111,18 @@ public class Arm extends CommandBase{
 
     @Override
     public void initialize(){
+
         if(armControl.getArmExtentionSpeed() != 0) {
             armControl.setArmExtentionSpeed(0);
             armControl.setArmExtentionSpeed(-2);
         }
 
         if(ExtentionSet == -1) {
-            armControl.setArmExtention(armControl.getExtentionPosition());
+            ExtentionSet = armControl.getArmExtention();
+        }
+
+        if(ArmRotationSet == -1) {
+            ArmRotationSet = armControl.getArmRotation();
         }
 
         armControl.setAutoArmRotate(this.AutoRotate);
@@ -110,6 +144,7 @@ public class Arm extends CommandBase{
         
 
         if(ExtentionSpeed == -2) {
+            armControl.doBuffer(shouldBuffer);
             this.isFinished = armControl.setArmMotionProfile(ArmRotationSet, ExtentionSet, false);
         } else {
             armControl.setArmExtentionSpeed(this.ExtentionSpeed);
@@ -136,6 +171,7 @@ public class Arm extends CommandBase{
 
     @Override
     public boolean isFinished(){
-        return true /* this.isFinished */;
+        //armControl.isArmInPosistion()
+        return armControl.isArmRotationInPosistion() && armControl.isArmInPosistion() /* this.isFinished */;
     }
 }

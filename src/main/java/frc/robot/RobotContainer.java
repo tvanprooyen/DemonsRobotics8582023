@@ -5,7 +5,6 @@
 package frc.robot;
 
 import java.util.List;
-import java.util.function.BooleanSupplier;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
@@ -16,19 +15,15 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.math.trajectory.TrajectoryGenerator;
-import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.XboxController;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import frc.robot.Constants.AutoConstants;
-//import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.OIConstants;
-import frc.robot.Constants.SDSConstants;
+import frc.robot.Util.JoystickAxisAsButton;
 import frc.robot.Util.MatchData;
 import frc.robot.Util.ToggleSys;
 import frc.robot.Util.MatchData.Actions;
@@ -37,11 +32,11 @@ import frc.robot.commands.ArmResetCommand;
 import frc.robot.commands.DriveCommand;
 import frc.robot.commands.LEDCMD;
 import frc.robot.commands.LimeLightCommand;
+import frc.robot.commands.WaitCommand;
 import frc.robot.commands.ClawCMD;
 import frc.robot.subsystems.ArmControl;
 import frc.robot.subsystems.ClawSubsystem;
 import frc.robot.subsystems.DrivetrainSubsystem;
-//import frc.robot.subsystems.SwerveDrive;
 import frc.robot.subsystems.LEDControl;
 import frc.robot.subsystems.Limelight;
 
@@ -77,8 +72,6 @@ public class RobotContainer {
      * Each Driver has their own profile
      * Robot code needs to reboot inorder for changes to be in effect
      */
-
-     mData.setDriverSelect(driver);
     
     drivetrain.register();
 
@@ -87,27 +80,35 @@ public class RobotContainer {
             limelight,
             () -> xLimiter.calculate(modifyAxis(controller.getLeftY())), // Axes are flipped here on purpose
             () -> yLimiter.calculate(modifyAxis(controller.getLeftX())),
-            () -> rotLimiter.calculate(modifyAxis((-controller.getLeftTriggerAxis() + controller.getRightTriggerAxis()) + controller.getRightX())), //controller.getRightX()
+            () -> rotLimiter.calculate(modifyAxis(controller.getRightX())), //(-controller.getLeftTriggerAxis() + controller.getRightTriggerAxis()) + 
             () -> controller.getPOV(),
             () -> controller.getRightStickButton()
     ));
 
-      configureButtonBindings();
+      configureButtonBindings(driver);
   }
 
   public LEDControl getLedControl() {
     return ledControl;
   }
 
+  public ArmControl getArmControl() {
+    return armControl;
+  }
 
-  private void configureButtonBindings() {
+
+  public void configureButtonBindings(String driver) {
+
+    mData.setDriverSelect(driver);
 
     boolean autoRotate = true;
 
     /*
-      Reset Buttons
+      Gabe
+      ----Reset Buttons----
       Drive Gyro = 8/Start
       Reset Arm Encoder = 7/Back
+      ----Arm----
       Low Goal/Single Station = 5/Left Bumper
       High Goal = 6/Right Bumper
       Intake = 3/X
@@ -118,9 +119,10 @@ public class RobotContainer {
 
     /*
       Allison
-      Reset Buttons
+      ----Reset Buttons----
       Drive Gyro = 8/Start
       Reset Arm Encoder = 7/Back
+      ----Arm----
       Low Link = 1/A
       Mid Link/Single Station = 2/B
       Top Link = 4/Y
@@ -140,24 +142,40 @@ public class RobotContainer {
       //new InstantCommand(armControl::resetEncoder)
     );
 
-    new JoystickButton(controller, 2 /* mData.getProfileButton(Actions.MODE) */)
+    new JoystickButton(controller,2/*  mData.getProfileButton(Actions.MODE) */)
     //.debounce(0.15)
     .onTrue(
-      new InstantCommand(toggle::notToggle)
+      new SequentialCommandGroup(
+      new InstantCommand(toggle::notToggle),
+      new LEDCMD(toggle, ledControl)
+      )
     );
     
     
     // ----------------------------------- ARM CONTROL -----------------------------------
     //Mid Goal
     new JoystickButton(controller, mData.getProfileButton(Actions.MIDGOAL))
-    .whileTrue(
-      new ClawCMD(claw, -0.3)
-    )
     .onTrue(
-      new Arm(armControl, autoRotate, 
-      100, 10,
-      100, 10,
-      toggle)
+      new SequentialCommandGroup(
+        new Arm(armControl, autoRotate, 
+        100, 10,
+        90, 2,
+        toggle,
+        false),
+        new WaitCommand(1),
+        new Arm(armControl, autoRotate, 
+        100, 10,
+        90, 25,
+        toggle,
+        false),
+        new WaitCommand(1),
+        new Arm(armControl, autoRotate, 
+        100, 10,
+        125, 25,
+        toggle,
+        false)
+      )
+
       .alongWith(
         new LEDCMD(toggle, ledControl)
       ).alongWith(
@@ -168,10 +186,25 @@ public class RobotContainer {
     //High Goal
     new JoystickButton(controller,mData.getProfileButton(Actions.HIGHGOAL))
     .onTrue(
-      new Arm(armControl, autoRotate, 
-      115, 36,
-      115, 36,
-      toggle)
+      new SequentialCommandGroup(
+        new Arm(armControl, autoRotate, 
+        80, 2,
+        80, 2,
+        toggle,
+        false),
+        new WaitCommand(1),
+        new Arm(armControl, autoRotate, 
+        100, 36,
+        100, 40,
+        toggle,
+        false),
+        new WaitCommand(1),
+        new Arm(armControl, autoRotate, 
+        115, 36,
+        130, 40,
+        toggle,
+        false)
+      )
       .alongWith(
         new LEDCMD(toggle, ledControl)
       ).alongWith(
@@ -182,10 +215,10 @@ public class RobotContainer {
     //Store
     new JoystickButton(controller,mData.getProfileButton(Actions.STORE))
     .onTrue(
-      new Arm(armControl, autoRotate, 
-      165, 0,
-      165, 0,
-      toggle)
+        new Arm(armControl, autoRotate, 
+        150, 0,
+        150, 0,
+        toggle)
       .alongWith(
         new LEDCMD(0, ledControl)
       ).alongWith(
@@ -196,22 +229,33 @@ public class RobotContainer {
     //Claw and Intake Pose
     new JoystickButton(controller, mData.getProfileButton(Actions.LOWGOAL))
     .onTrue(
-      new Arm(armControl, false, 
-      50, 15,
-      70, 2,
-      toggle)
+      new SequentialCommandGroup(
+        new Arm(armControl, false, 
+        90, 2,
+        70, 2,
+        toggle,
+        false),
+        new WaitCommand(1),
+        new Arm(armControl, false, 
+        50, 17,
+        70, 2,
+        toggle,
+        false)
+      )
       .alongWith(
         new LEDCMD(toggle, ledControl)
       ).alongWith(
         new LimeLightCommand(limelight, 3)
       )
-    )
+    );
+
+    //Claw Out
+    new JoystickAxisAsButton(controller, 3)
     .whileTrue(
       new ClawCMD(claw, -0.3)
     );
 
-    //Claw Out
-    new JoystickButton(controller, mData.getProfileButton(Actions.RELEASE))
+    new JoystickAxisAsButton(controller, 2)
     .whileTrue(
       new ClawCMD(claw, 0.3)
     );
@@ -222,68 +266,66 @@ public class RobotContainer {
       return drivetrain;
   }
 
-private static double deadband(double value, double deadband) {
-    if (Math.abs(value) > deadband) {
-        if (value > 0.0) {
-            return (value - deadband) / (1.0 - deadband);
-        } else {
-            return (value + deadband) / (1.0 - deadband);
-        }
-    } else {
-        return 0.0;
-    }
-}
+  private static double deadband(double value, double deadband) {
+      if (Math.abs(value) > deadband) {
+          if (value > 0.0) {
+              return (value - deadband) / (1.0 - deadband);
+          } else {
+              return (value + deadband) / (1.0 - deadband);
+          }
+      } else {
+          return 0.0;
+      }
+  }
 
-private static double modifyAxis(double value) {
-    // Deadband
-    value = deadband(value, 0.05);
+  private static double modifyAxis(double value) {
+      // Deadband
+      value = deadband(value, 0.05);
 
-    // Square the axis
-    value = Math.copySign(value * value, value);
+      // Square the axis
+      value = Math.copySign(value * value, value);
 
-    return value;
-}
-/* 
+      return value;
+  }
+
    public Command getAutonomousCommand() {
     TrajectoryConfig trajectoryConfig = new TrajectoryConfig(
-      AutoConstants.kMaxSpeedMetersPerSecond,
-       AutoConstants.kMaxAccelerationMetersPerSecondSquared)
+      5,
+       4)
          .setKinematics(drivetrain.kinematics);
 
     Trajectory trajectory = TrajectoryGenerator.generateTrajectory(
       new Pose2d(0, 0, new Rotation2d(0)),
       List.of(
-        new Translation2d(1, 0),
-        new Translation2d(1, -1)
+        new Translation2d(1, 0)
       ),
-      new Pose2d(2, -1, Rotation2d.fromDegrees(180)),
+      new Pose2d(3, 0, Rotation2d.fromDegrees(0)),
       trajectoryConfig
     );
 
-    PIDController xController = new PIDController(AutoConstants.kPXController, 0, 0);
-    PIDController yController = new PIDController(AutoConstants.kPYController, 0, 0);
+    PIDController xController = new PIDController(0.5, 0, 0); //TODO May need to change kP
+    PIDController yController = new PIDController(0.5, 0, 0); //TODO May need to change kP
     ProfiledPIDController thetaController = new ProfiledPIDController(
-      AutoConstants.kPThetaController, 0, 0, AutoConstants.kThetaControllerConstraints);
-    thetaController.enableContinuousInput(-Math.PI, Math.PI); */
+      1.7, //TODO May need to change kP
+      0, 
+      0, 
+      AutoConstants.kThetaControllerConstraints);
+    thetaController.enableContinuousInput(-Math.PI, Math.PI);
 
-    
-
-    //SwerveControllerCommand s = new SwerveControllerCommand(trajectory, drivetrain::robotPose, drivetrain.kinematics, xController, yController, thetaController, null, drivetrain);
-    /* 
     SwerveControllerCommand swerveControllerCommand = new SwerveControllerCommand(
-      trajectory,
-      (drivetrain::getPos),
-      drivetrain.kinematics,
-      xController,
-      yController,
-      thetaController,
+      trajectory, 
+      drivetrain::getPos, 
+      drivetrain.kinematics, 
+      xController, 
+      yController, 
+      thetaController, 
       drivetrain::setModuleStates,
       drivetrain);
-      */
+     
 
-    /* return new SequentialCommandGroup(
-      new InstantCommand(() -> swerveDrive.resetOdometry(trajectory.getInitialPose())),
+     return new SequentialCommandGroup(
+      new InstantCommand(() -> drivetrain.resetOdometry(trajectory.getInitialPose())),
       swerveControllerCommand,
-      new InstantCommand(() -> swerveDrive.stopModules()));  
-  }*/
+      new InstantCommand(() -> drivetrain.stopModules()));  
+  }
 }

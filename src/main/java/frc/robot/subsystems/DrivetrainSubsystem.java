@@ -175,6 +175,10 @@ public class DrivetrainSubsystem extends SubsystemBase {
         return odometry.getPoseMeters().getRotation();
     }
 
+    public Pose2d getPos() {
+        return odometry.getPoseMeters();
+    }
+
     public void drive(ChassisSpeeds chassisSpeeds) {
         this.chassisSpeeds = chassisSpeeds;
     }
@@ -201,6 +205,19 @@ public class DrivetrainSubsystem extends SubsystemBase {
         this.RotateLock = RotateLock;
     }
 
+    public void resetOdometry(Pose2d pose) {
+        odometry.resetPosition(
+            Rotation2d.fromDegrees(getGyroYaw()), 
+            new SwerveModulePosition[] {
+                frontLeftModule.getPosition(),
+                frontRightModule.getPosition(),
+                backLeftModule.getPosition(),
+                backRightModule.getPosition()
+            }, 
+            pose
+        );
+    }
+
     @Override
     public void periodic() {
 
@@ -219,18 +236,25 @@ public class DrivetrainSubsystem extends SubsystemBase {
 
         SwerveModuleState[] states = kinematics.toSwerveModuleStates(chassisSpeeds);
 
+        setModuleStates(states);
+    }
+
+    public void setModuleStates(SwerveModuleState[] states) {
         frontLeftModule.set(states[0].speedMetersPerSecond / MAX_VELOCITY_METERS_PER_SECOND * MAX_VOLTAGE, states[0].angle.getRadians());
         frontRightModule.set(states[1].speedMetersPerSecond / MAX_VELOCITY_METERS_PER_SECOND * MAX_VOLTAGE, states[1].angle.getRadians());
         backLeftModule.set(states[2].speedMetersPerSecond / MAX_VELOCITY_METERS_PER_SECOND * MAX_VOLTAGE, states[2].angle.getRadians());
         backRightModule.set(states[3].speedMetersPerSecond / MAX_VELOCITY_METERS_PER_SECOND * MAX_VOLTAGE, states[3].angle.getRadians());
     }
 
+    public void stopModules() {
+        frontLeftModule.stop();
+        frontRightModule.stop();
+        backLeftModule.stop();
+        backRightModule.stop();
+    }
+
     private void dashboard() {
         SmartDashboard.putNumber("Rotate Set Point", getPIDRotateValue());
         SmartDashboard.putNumber("Rotate PID Calc", rotatePIDCalculation());
-    }
-   
-    public <Supplier>Pose2d getPos() {
-        return odometry.getPoseMeters();
     }
 }
