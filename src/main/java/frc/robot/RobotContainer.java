@@ -142,7 +142,7 @@ public class RobotContainer {
       //new InstantCommand(armControl::resetEncoder)
     );
 
-    new JoystickButton(controller,2/*  mData.getProfileButton(Actions.MODE) */)
+    new JoystickButton(controller, 2/* mData.getProfileButton(Actions.MODE) */)
     //.debounce(0.15)
     .onTrue(
       new SequentialCommandGroup(
@@ -165,13 +165,13 @@ public class RobotContainer {
         new WaitCommand(1),
         new Arm(armControl, autoRotate, 
         100, 10,
-        90, 25,
+        90, 28,
         toggle,
         false),
         new WaitCommand(1),
         new Arm(armControl, autoRotate, 
         100, 10,
-        125, 25,
+        125, 28,
         toggle,
         false)
       )
@@ -192,16 +192,16 @@ public class RobotContainer {
         80, 2,
         toggle,
         false),
-        new WaitCommand(1),
+        new WaitCommand(0.5),
         new Arm(armControl, autoRotate, 
-        100, 36,
-        100, 40,
+        80, 36,
+        80, 48,
         toggle,
         false),
-        new WaitCommand(1),
+        new WaitCommand(0.5),
         new Arm(armControl, autoRotate, 
         115, 36,
-        130, 40,
+        138, 48,
         toggle,
         false)
       )
@@ -290,21 +290,22 @@ public class RobotContainer {
 
    public Command getAutonomousCommand() {
     TrajectoryConfig trajectoryConfig = new TrajectoryConfig(
-      5,
-       4)
-         .setKinematics(drivetrain.kinematics);
+      3,
+       3)
+         .setKinematics(drivetrain.kinematics)
+         .setReversed(true);
 
     Trajectory trajectory = TrajectoryGenerator.generateTrajectory(
       new Pose2d(0, 0, new Rotation2d(0)),
       List.of(
-        new Translation2d(1, 0)
+        new Translation2d(-1, 0.01)
       ),
-      new Pose2d(3, 0, Rotation2d.fromDegrees(0)),
+      new Pose2d(-3, 0, Rotation2d.fromDegrees(0)),
       trajectoryConfig
     );
 
-    PIDController xController = new PIDController(0.5, 0, 0); //TODO May need to change kP
-    PIDController yController = new PIDController(0.5, 0, 0); //TODO May need to change kP
+    PIDController xController = new PIDController(0.1, 0, 0); //TODO May need to change kP
+    PIDController yController = new PIDController(0.1, 0, 0); //TODO May need to change kP
     ProfiledPIDController thetaController = new ProfiledPIDController(
       1.7, //TODO May need to change kP
       0, 

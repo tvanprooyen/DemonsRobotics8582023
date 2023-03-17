@@ -8,7 +8,7 @@ public class ToggleSys extends SubsystemBase {
     private boolean toggle;
 
     public ToggleSys() {
-        setToggle(false);
+        setToggle(true);
     }
 
     public boolean getToggle() {

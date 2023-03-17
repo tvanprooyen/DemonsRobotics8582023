@@ -146,7 +146,7 @@ public class ArmControl extends SubsystemBase {
 
     public boolean isArmRotationInPosistion() {
         //Acceptable Range to say its finished, There will always be an error in PID. Never fully reaches 0;
-        double rotationTol = 4; //TODO CHANGE THIS WHEN TESTING
+        double rotationTol = 6; //TODO CHANGE THIS WHEN TESTING
 
         double armRotationSet = getArmRotation();
 
