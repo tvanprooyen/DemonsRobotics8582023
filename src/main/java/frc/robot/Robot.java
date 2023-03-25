@@ -50,14 +50,13 @@ public class Robot extends TimedRobot {
     switch (m_driver.getSelected()) {
       case kGabe: m_driverselected = "Gabe"; break;
       case kAllison: m_driverselected = "Allison"; break;
-      default: m_driverselected = "Gabe";
+      default: m_driverselected = "Allison";
     }
 
-    m_robotContainer = new RobotContainer(m_driverselected);
+    m_robotContainer = new RobotContainer(kAllison);
     ledControl = m_robotContainer.getLedControl();
     mData = ledControl.getMatchData();
     mData.setGetGameMode(0);
-
     armControl = m_robotContainer.getArmControl();
   }
 

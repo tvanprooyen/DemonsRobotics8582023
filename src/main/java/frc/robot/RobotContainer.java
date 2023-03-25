@@ -65,6 +65,7 @@ public class RobotContainer {
   private final SlewRateLimiter rotLimiter = new SlewRateLimiter(mData.getProfileSlewRate());
 
   private final XboxController controller = new XboxController(OIConstants.kDriverControllerPort);
+  private final XboxController controller1 = new XboxController(OIConstants.kDriverControllerPort1);
 
   public RobotContainer(String driver) {
     /* ------------------------------------ IMPORTANT ------------------------------------
@@ -78,11 +79,11 @@ public class RobotContainer {
     drivetrain.setDefaultCommand(new DriveCommand(
             drivetrain,
             limelight,
-            () -> xLimiter.calculate(modifyAxis(controller.getLeftY())), // Axes are flipped here on purpose
-            () -> yLimiter.calculate(modifyAxis(controller.getLeftX())),
-            () -> rotLimiter.calculate(modifyAxis(controller.getRightX())), //(-controller.getLeftTriggerAxis() + controller.getRightTriggerAxis()) + 
-            () -> controller.getPOV(),
-            () -> controller.getRightStickButton()
+            () -> xLimiter.calculate(modifyAxis(controller1.getLeftY())), // Axes are flipped here on purpose
+            () -> yLimiter.calculate(modifyAxis(controller1.getLeftX())),
+            () -> rotLimiter.calculate(modifyAxis(controller1.getRightX())), //(-controller.getLeftTriggerAxis() + controller.getRightTriggerAxis()) + 
+            () -> controller1.getPOV(),
+            () -> controller1.getRightStickButton()
     ));
 
       configureButtonBindings(driver);
@@ -131,7 +132,7 @@ public class RobotContainer {
     */
 
     // ----------------------------------- RESETS -----------------------------------
-    new JoystickButton(controller,8)
+    new JoystickButton(controller1,8)
     .whileTrue(
       new InstantCommand(drivetrain::zeroGyroscope)
     );
@@ -201,7 +202,7 @@ public class RobotContainer {
         new WaitCommand(0.5),
         new Arm(armControl, autoRotate, 
         115, 36,
-        138, 48,
+        132, 48,
         toggle,
         false)
       )
@@ -226,6 +227,19 @@ public class RobotContainer {
       )
     );
 
+    //Store inside robot
+    new JoystickButton(controller,mData.getProfileButton(Actions.INSIDE)).onTrue(
+      new Arm(armControl, autoRotate,
+      40, 0,
+      40, 0,
+      toggle)
+      .alongWith(
+        new LEDCMD(0, ledControl)
+      ).alongWith(
+        new LimeLightCommand(limelight, 3)
+      )      
+    );
+
     //Claw and Intake Pose
     new JoystickButton(controller, mData.getProfileButton(Actions.LOWGOAL))
     .onTrue(
@@ -238,7 +252,7 @@ public class RobotContainer {
         new WaitCommand(1),
         new Arm(armControl, false, 
         50, 17,
-        70, 2,
+        69.5, 2,
         toggle,
         false)
       )
