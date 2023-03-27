@@ -116,6 +116,9 @@ public final class NeoSteerControllerFactoryBuilder {
             this.controller = motor.getPIDController();
             this.motorEncoder = motor.getEncoder();
             this.absoluteEncoder = absoluteEncoder;
+
+            motor.setSmartCurrentLimit(20);
+            motor.burnFlash();
         }
 
         @Override

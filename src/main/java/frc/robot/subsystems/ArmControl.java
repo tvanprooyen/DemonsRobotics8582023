@@ -165,7 +165,7 @@ public class ArmControl extends SubsystemBase {
      * Runs the Arm Rotation sequence
      */
     public void runArmRotation() {
-        runArmRotation(0.2);
+        runArmRotation(0.4);
     }
 
     /**
@@ -228,10 +228,10 @@ public class ArmControl extends SubsystemBase {
 
             if(getRotationPosition() < 60 && (getExtentionPosition() > 1 || getArmExtention() > 1)) {
 
-                if(ArmRotationFuturePosition > 0.10) {
-                    ArmRotationFuturePosition = 0.10;
-                } else if(ArmRotationFuturePosition < -0.10) {
-                    ArmRotationFuturePosition = -0.10;
+                if(ArmRotationFuturePosition > 0.30) {
+                    ArmRotationFuturePosition = 0.30;
+                } else if(ArmRotationFuturePosition < -0.30) {
+                    ArmRotationFuturePosition = -0.30;
                 }
 
                 if(ArmRotationFuturePosition < 0) {
@@ -341,7 +341,7 @@ public class ArmControl extends SubsystemBase {
 
     public void runArmExtention() {
         double ArmExtentionFuturePosition = 0;
-        double speedLimiter = 0.65;
+        double speedLimiter = 0.75;
 
         ArmExtentionFuturePosition = extPID.calculate(getExtentionPosition(), getArmExtention());
 
@@ -458,7 +458,7 @@ public class ArmControl extends SubsystemBase {
     @Override
     public void periodic() {
         
-        runArmRotation(0.3);
+        runArmRotation(0.5);
         runArmExtention();
 
         if(shouldBuffer() && (!isMotionProfilerunning() && !isArmExtented())) {

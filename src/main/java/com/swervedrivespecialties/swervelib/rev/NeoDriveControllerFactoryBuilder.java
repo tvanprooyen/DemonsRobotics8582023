@@ -62,6 +62,9 @@ public final class NeoDriveControllerFactoryBuilder {
             encoder.setPositionConversionFactor(positionConversionFactor);
             encoder.setVelocityConversionFactor(positionConversionFactor / 60.0);
 
+            motor.setSmartCurrentLimit(40);
+            motor.burnFlash();
+
             return new ControllerImplementation(motor, encoder);
         }
     }

@@ -163,13 +163,13 @@ public class RobotContainer {
         90, 2,
         toggle,
         false),
-        new WaitCommand(1),
+        new WaitCommand(0.25),
         new Arm(armControl, autoRotate, 
         100, 10,
         90, 28,
         toggle,
         false),
-        new WaitCommand(1),
+        new WaitCommand(0.25),
         new Arm(armControl, autoRotate, 
         100, 10,
         125, 28,
@@ -188,18 +188,18 @@ public class RobotContainer {
     new JoystickButton(controller,mData.getProfileButton(Actions.HIGHGOAL))
     .onTrue(
       new SequentialCommandGroup(
-        new Arm(armControl, autoRotate, 
+       new Arm(armControl, autoRotate, 
         80, 2,
         80, 2,
         toggle,
         false),
-        new WaitCommand(0.5),
+        new WaitCommand(0.25),
         new Arm(armControl, autoRotate, 
         80, 36,
         80, 48,
         toggle,
         false),
-        new WaitCommand(0.5),
+        new WaitCommand(0.25),
         new Arm(armControl, autoRotate, 
         115, 36,
         132, 48,
@@ -229,7 +229,7 @@ public class RobotContainer {
 
     //Store inside robot
     new JoystickButton(controller,mData.getProfileButton(Actions.INSIDE)).onTrue(
-      new Arm(armControl, autoRotate,
+      new Arm(armControl, autoRotate = false,
       40, 0,
       40, 0,
       toggle)
@@ -249,10 +249,10 @@ public class RobotContainer {
         70, 2,
         toggle,
         false),
-        new WaitCommand(1),
+        new WaitCommand(0.25),
         new Arm(armControl, false, 
         50, 17,
-        69.5, 2,
+        68.5, 2,
         toggle,
         false)
       )

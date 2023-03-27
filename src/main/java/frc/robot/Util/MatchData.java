@@ -47,9 +47,9 @@ public class MatchData {
                 case LOWGOAL: selectedButton = 1; break;
                 case MIDGOAL: selectedButton = 3; break;
                 case HIGHGOAL: selectedButton = 4; break;
-                case STORE: selectedButton = 5; break;
+                case STORE: selectedButton = 8; break;
                 case RELEASE: selectedButton = 6; break;
-                case INSIDE: selectedButton = 8; break;
+                case INSIDE: selectedButton = 5; break;
                 case MODE: selectedButton = 2;
                 default: selectedButton = 2; break;
             }

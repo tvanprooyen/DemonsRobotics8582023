@@ -70,9 +70,9 @@ public class DriveCommand extends CommandBase {
         //LimeLight
         if(startLimeLightAlign) {
             if(drivetrain.getRotationInDeg() < 90 && drivetrain.getRotationInDeg() > -90) {
-                translationYPercent += limelight.PIDControllerCalculation();
-            } else {
                 translationYPercent -= limelight.PIDControllerCalculation();
+            } else {
+                translationYPercent += limelight.PIDControllerCalculation();
             }
         }
 
